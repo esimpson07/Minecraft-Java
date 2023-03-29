@@ -96,7 +96,7 @@ public class SpatialCalc {
         }
     }
 
-    private void setPosition(double x, double y, double z) {
+    public void setPosition(double x, double y, double z) {
         kx = x;
         ky = y;
         kz = z;
@@ -109,9 +109,12 @@ public class SpatialCalc {
         points.add(new Vector3(0.5 + kx, -0.5 + ky, 0.5 + kz));
         points.add(new Vector3(0.5 + kx, 0.5 + ky, 0.5 + kz));
         points.add(new Vector3(-0.5 + kx, 0.5 + ky, 0.5 + kz));
+        System.out.println(kx);
+        System.out.println(ky);
+        System.out.println(kz);
     }
     
-    private void setAngle(double xAngle, double yAngle, double zAngle) {
+    public void setAngle(double xAngle, double yAngle, double zAngle) {
         angleX = xAngle;
         angleY = yAngle;
         angleZ = zAngle;
@@ -138,15 +141,9 @@ public class SpatialCalc {
 
         double[][] projected = new double[8][];
         for(int i = 0; i < points.size(); i ++) {
-            System.out.print("rotZ: ");
-            printMatrix(rotationZ);
             double[] rotated = multiplyMatrices(rotationY, points.get(i).toMatrix());
             rotated = multiplyMatrices(rotationX, rotated);
-            System.out.print("Pre mult: ");
-            printMatrix(rotated);
             rotated = multiplyMatrices(rotationZ, rotated);
-            System.out.print("Post mult: ");
-            printMatrix(rotated);
             double z = 1 / rotated[2];
 
             double[][] projection = new double[][]{
@@ -160,7 +157,6 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
-        printMatrix(projected);
 
         return(projected);
     }
