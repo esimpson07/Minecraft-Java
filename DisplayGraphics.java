@@ -29,14 +29,13 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube3 = new SpatialCalc(-2 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube4 = new SpatialCalc(-1 + px,1,2 + py,0,angleY,0);
-    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2,cube3,cube4}; 
+    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2,cube3,cube4};
     
     public DisplayGraphics() {
         addMouseListener(this);
         addMouseMotionListener(this);
     }
     public void mouseMoved(MouseEvent e) {
-        System.out.println("moved");
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
@@ -56,20 +55,20 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void keyPressed(KeyEvent event) {
         String key = KeyEvent.getKeyText(event.getKeyCode());
         if(key.equals("W")) {
-            px += tickDist * cos(angleY - 90);
-            py += tickDist * sin(angleY - 90);
-            setPlayerPosition(px,py,0);
-        } else if(key.equals("S")) {
             px += tickDist * cos(angleY + 90);
             py += tickDist * sin(angleY + 90);
             setPlayerPosition(px,py,0);
-        } else if(key.equals("D")) {
-            px += tickDist * cos(angleY + 180);
-            py += tickDist * sin(angleY + 180);
+        } else if(key.equals("S")) {
+            px += tickDist * cos(angleY - 90);
+            py += tickDist * sin(angleY - 90);
             setPlayerPosition(px,py,0);
-        } else if(key.equals("A")) {
+        } else if(key.equals("D")) {
             px += tickDist * cos(angleY);
             py += tickDist * sin(angleY);
+            setPlayerPosition(px,py,0);
+        } else if(key.equals("A")) {
+            px += tickDist * cos(angleY + 180);
+            py += tickDist * sin(angleY + 180);
             setPlayerPosition(px,py,0);
         } 
         revalidate();
@@ -77,18 +76,12 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     }
 
     @Override
-    public void keyReleased(KeyEvent event) {
-        System.out.println("Key Released: " + KeyEvent.getKeyText(event.getKeyCode()));
-    }
-
+    public void keyReleased(KeyEvent event) {}
     @Override
-    public void keyTyped(KeyEvent event) {
-
-    }
-        
+    public void keyTyped(KeyEvent event) {}
+    
     public void paint(Graphics g) {
         super.paint(g);
-        System.out.println("painting");
         for(int j = 0; j < allCubes.length; j ++) {
             SpatialCalc cube = allCubes[j];
             double[][] allPoints = cube.draw();
@@ -106,10 +99,10 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double sin(double angle) {return(Math.sin((Math.PI * angle) / 180.0));}
 
     public void setPlayerPosition(double x, double y, double z) {
-        cube1.setPosition(0 + x, 0 + z, 2 + y);
-        cube2.setPosition(-1 + x, 0 + z, 2 + y);
-        cube3.setPosition(-2 + x, 0 + z, 2 + y);
-        cube4.setPosition(-1 + x, 1 + z, 2 + y);
+        cube1.setPosition(0 - x, 0 - z, 2 - y);
+        cube2.setPosition(-1 - x, 0 - z, 2 - y);
+        cube3.setPosition(-2 - x, 0 - z, 2 - y);
+        cube4.setPosition(-1 - x, 1 - z, 2 - y);
         allCubes[0] = cube1;
         allCubes[1] = cube2;
         allCubes[2] = cube3;
