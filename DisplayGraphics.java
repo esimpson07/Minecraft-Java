@@ -41,16 +41,15 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         addMouseListener(this);
         addMouseMotionListener(this);
     }
+    
     public void mouseMoved(MouseEvent e) {
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
-        angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
+        angleY += dpi * 90 * (2 * (double)(mXDist) / (double)(width));
         angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
         mXOG = e.getX();
         mYOG = e.getY();
         setPlayerAngle(angleX,angleY,0);
-        revalidate();
-        repaint();
     }
     public void mouseDragged(MouseEvent e) {}
     public void mousePressed(MouseEvent e) {}
@@ -72,14 +71,12 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
             d = 1;
         } else if(key.equals("A")) {
             a = 1;
-        } 
-        revalidate();
-        repaint();
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent event) {
-    String key = KeyEvent.getKeyText(event.getKeyCode());
+        String key = KeyEvent.getKeyText(event.getKeyCode());
         if(key.equals("W")) {
             w = 0;
         } else if(key.equals("S")) {
@@ -157,6 +154,8 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
             py += tickDist * sin(angleY + 180);
         }
         setPlayerPosition(px,py,0);
+        revalidate();
+        repaint();
     }
     
     private void gameLoop() {
@@ -173,7 +172,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         contentPane.add(textField, BorderLayout.NORTH);
         f.setSize(1000,600);  
         f.setVisible(true);  
-        new javax.swing.Timer(20, new ActionListener() {
+        new javax.swing.Timer(15, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 m.gameLoop();
             }
