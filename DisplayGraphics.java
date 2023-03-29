@@ -22,7 +22,6 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double px = 0;
     private double py = 0;
     
-    private double radius = 2;
     private double angleY = 0;
     private double angleZ = 0;
     //x, z, y (side to side, height, forward to back)
@@ -43,7 +42,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
         mXOG = e.getX();
         mYOG = e.getY();
-        changePlayerAngle(0,angleY,angleZ);
+        setPlayerAngle(0,angleY,angleZ);
         revalidate();
         repaint();
     }
@@ -57,21 +56,21 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void keyPressed(KeyEvent event) {
         String key = KeyEvent.getKeyText(event.getKeyCode());
         if(key.equals("W")) {
-            px += tickDist * sin(angleY + 180);
-            py += tickDist * cos(angleY + 180);
-            changePlayerPosition(px,py,0);
+            px += tickDist * cos(angleY - 90);
+            py += tickDist * sin(angleY - 90);
+            setPlayerPosition(px,py,0);
         } else if(key.equals("S")) {
-            px += tickDist * sin(angleY);
-            py += tickDist * cos(angleY);
-            changePlayerPosition(px,py,0);
+            px += tickDist * cos(angleY + 90);
+            py += tickDist * sin(angleY + 90);
+            setPlayerPosition(px,py,0);
         } else if(key.equals("D")) {
-            px += tickDist * sin(angleY - 90);
-            py += tickDist * cos(angleY - 90);
-            changePlayerPosition(px,py,0);
+            px += tickDist * cos(angleY + 180);
+            py += tickDist * sin(angleY + 180);
+            setPlayerPosition(px,py,0);
         } else if(key.equals("A")) {
-            px += tickDist * sin(angleY + 90);
-            py += tickDist * cos(angleY + 90);
-            changePlayerPosition(px,py,0);
+            px += tickDist * cos(angleY);
+            py += tickDist * sin(angleY);
+            setPlayerPosition(px,py,0);
         } 
         revalidate();
         repaint();
@@ -106,7 +105,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
 
     private double sin(double angle) {return(Math.sin((Math.PI * angle) / 180.0));}
 
-    public void changePlayerPosition(double x, double y, double z) {
+    public void setPlayerPosition(double x, double y, double z) {
         cube1.setPosition(0 + x, 0 + z, 2 + y);
         cube2.setPosition(-1 + x, 0 + z, 2 + y);
         cube3.setPosition(-2 + x, 0 + z, 2 + y);
@@ -117,7 +116,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         allCubes[3] = cube4;
     }
     
-    public void changePlayerAngle(double xAngle, double yAngle, double zAngle) {
+    public void setPlayerAngle(double xAngle, double yAngle, double zAngle) {
         cube1.setAngle(xAngle,yAngle,zAngle);
         cube2.setAngle(xAngle,yAngle,zAngle);
         cube3.setAngle(xAngle,yAngle,zAngle);
