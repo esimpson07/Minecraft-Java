@@ -109,9 +109,6 @@ public class SpatialCalc {
         points.add(new Vector3(0.5 + kx, -0.5 + ky, 0.5 + kz));
         points.add(new Vector3(0.5 + kx, 0.5 + ky, 0.5 + kz));
         points.add(new Vector3(-0.5 + kx, 0.5 + ky, 0.5 + kz));
-        System.out.println(kx);
-        System.out.println(ky);
-        System.out.println(kz);
     }
     
     public void setAngle(double xAngle, double yAngle, double zAngle) {
@@ -159,5 +156,29 @@ public class SpatialCalc {
         }
 
         return(projected);
+    }
+}
+
+class Vector3 {
+    double x;
+    double y;
+    double z;
+    
+    public Vector3(double X, double Y, double Z) {
+        x = X;
+        y = Y;
+        z = Z;
+    }
+    
+    public void setX(double X) {x = X;}
+    public void setY(double Y) {y = Y;}
+    public void setZ(double Z) {z = Z;}
+    public double X() {return(x);}
+    public double Y() {return(y);}
+    public double Z() {return(z);}
+    
+    public double[] toMatrix() {
+        double [] vectorMatrix = new double[]{x,y,z};
+        return(vectorMatrix);
     }
 }
