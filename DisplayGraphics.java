@@ -8,6 +8,8 @@ import javax.swing.JTextField;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class DisplayGraphics extends Canvas implements KeyListener, MouseListener, MouseMotionListener { 
     private int width = 1000;
@@ -16,6 +18,10 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private int mYOG = height/2;
     private int mXDist;
     private int mYDist;
+    private byte w = 0;
+    private byte a = 0;
+    private byte s = 0;
+    private byte d = 0;
     
     private double tickDist = 0.1;
     private double dpi = 1;
@@ -23,7 +29,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double py = 0;
     
     private double angleY = 0;
-    private double angleZ = 0;
+    private double angleX = 0;
     //x, z, y (side to side, height, forward to back)
     SpatialCalc cube1 = new SpatialCalc(0 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
@@ -39,44 +45,51 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
+        angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
         mXOG = e.getX();
         mYOG = e.getY();
-        setPlayerAngle(0,angleY,angleZ);
+        setPlayerAngle(angleX,angleY,0);
         revalidate();
         repaint();
     }
     public void mouseDragged(MouseEvent e) {}
     public void mousePressed(MouseEvent e) {}
     public void mouseClicked(MouseEvent e) {}  
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+        mXOG = e.getX();
+        mYOG = e.getY();
+    }
     public void mouseExited(MouseEvent e) {}  
     public void mouseReleased(MouseEvent e) {}  
     @Override
     public void keyPressed(KeyEvent event) {
         String key = KeyEvent.getKeyText(event.getKeyCode());
         if(key.equals("W")) {
-            px += tickDist * cos(angleY + 90);
-            py += tickDist * sin(angleY + 90);
-            setPlayerPosition(px,py,0);
+            w = 1;
         } else if(key.equals("S")) {
-            px += tickDist * cos(angleY - 90);
-            py += tickDist * sin(angleY - 90);
-            setPlayerPosition(px,py,0);
+            s = 1;
         } else if(key.equals("D")) {
-            px += tickDist * cos(angleY);
-            py += tickDist * sin(angleY);
-            setPlayerPosition(px,py,0);
+            d = 1;
         } else if(key.equals("A")) {
-            px += tickDist * cos(angleY + 180);
-            py += tickDist * sin(angleY + 180);
-            setPlayerPosition(px,py,0);
+            a = 1;
         } 
         revalidate();
         repaint();
     }
 
     @Override
-    public void keyReleased(KeyEvent event) {}
+    public void keyReleased(KeyEvent event) {
+    String key = KeyEvent.getKeyText(event.getKeyCode());
+        if(key.equals("W")) {
+            w = 0;
+        } else if(key.equals("S")) {
+            s = 0;
+        } else if(key.equals("D")) {
+            d = 0;
+        } else if(key.equals("A")) {
+            a = 0;
+        }
+    }
     @Override
     public void keyTyped(KeyEvent event) {}
     
@@ -128,6 +141,27 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         g.drawLine(round(points[a][0]) + (width / 2),round(points[a][1]) + (height / 2),
             round(points[b][0]) + (width / 2),round(points[b][1]) + (height / 2));
     }
+    
+    private void movePlayer(int fwd, int side) {  
+        if(fwd == 1) {
+            px += tickDist * cos(angleY + 90);
+            py += tickDist * sin(angleY + 90);
+        } else if(fwd == -1) {
+            px += tickDist * cos(angleY - 90);
+            py += tickDist * sin(angleY - 90);
+        } else if(side == 1) {
+            px += tickDist * cos(angleY);
+            py += tickDist * sin(angleY);
+        } else if(side == -1) {
+            px += tickDist * cos(angleY + 180);
+            py += tickDist * sin(angleY + 180);
+        }
+        setPlayerPosition(px,py,0);
+    }
+    
+    private void gameLoop() {
+        movePlayer(w - s, d - a);
+    }
 
     public static void main(String args[]) {  
         DisplayGraphics m=new DisplayGraphics();  
@@ -139,6 +173,11 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         contentPane.add(textField, BorderLayout.NORTH);
         f.setSize(1000,600);  
         f.setVisible(true);  
+        new javax.swing.Timer(20, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                m.gameLoop();
+            }
+        }).start();
     }  
 
 }  
