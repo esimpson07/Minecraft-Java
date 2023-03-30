@@ -25,6 +25,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     
     private double tickDist = 0.1;
     private double dpi = 1;
+    private double acceptedFOV = 70;
     private double px = 0;
     private double py = 0;
     
@@ -49,6 +50,8 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
         angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
+        angleY = angleY % 360;
+        angleX = angleX % 360;
         mXOG = e.getX();
         mYOG = e.getY();
         setPlayerAngle(angleX,angleY,0);
@@ -96,11 +99,14 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         super.paint(g);
         for(int j = 0; j < allCubes.length; j ++) {
             double[][] allPoints = allCubes[j].draw();
-
-            for (int i = 0; i < 4; i++) {
-                connect(i, (i + 1) % 4, allPoints, g);
-                connect(i + 4, ((i + 1) % 4) + 4, allPoints, g);
-                connect(i, i + 4, allPoints, g);
+            double relativeAngle = (180 / Math.PI * Math.atan(allCubes[j].getX() / allCubes[j].getZ())) + angleY;
+            System.out.println(relativeAngle);
+            if(Math.abs(relativeAngle) <= acceptedFOV){
+                for (int i = 0; i < 4; i++) {
+                    connect(i, (i + 1) % 4, allPoints, g);
+                    connect(i + 4, ((i + 1) % 4) + 4, allPoints, g);
+                    connect(i, i + 4, allPoints, g);
+                }
             }
         }
     }
