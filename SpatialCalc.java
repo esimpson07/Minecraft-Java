@@ -110,6 +110,9 @@ public class SpatialCalc {
     public double getOGX() {return(trueX);}
     public double getOGY() {return(trueY);}
     public double getOGZ() {return(trueZ);}
+    public double getX() {return(kx);}
+    public double getY() {return(ky);}
+    public double getZ() {return(kz);}
 
     public void setPosition(double x, double y, double z) {
         kx = x;
