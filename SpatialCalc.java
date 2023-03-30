@@ -7,12 +7,18 @@ public class SpatialCalc {
     double kx;
     double ky;
     double kz;
+    double trueX;
+    double trueY;
+    double trueZ;
     ArrayList<Vector3> points = new ArrayList<Vector3>();
 
     public SpatialCalc(double startX, double startY, double startZ, double xAngle, double yAngle, double zAngle) {
         kx = startX;
         ky = startY;
         kz = startZ;
+        trueX = startX;
+        trueY = startY;
+        trueZ = startZ;
         angleX = xAngle;
         angleY = yAngle;
         angleZ = zAngle;
@@ -29,6 +35,11 @@ public class SpatialCalc {
     private double cos(double angle) {return(Math.cos((Math.PI * angle) / 180.0));}
 
     private double sin(double angle) {return(Math.sin((Math.PI * angle) / 180.0));}
+    
+    private double round(double value, int places) {
+        double scale = Math.pow(10, places);
+        return Math.round(value * scale) / scale;
+    }
 
     private double[][] multiplyMatrices(double A[][], double B[][])
     {
@@ -95,6 +106,10 @@ public class SpatialCalc {
             System.out.println("[" + i + "] = " + matrix[i]);
         }
     }
+    
+    public double getOGX() {return(trueX);}
+    public double getOGY() {return(trueY);}
+    public double getOGZ() {return(trueZ);}
 
     public void setPosition(double x, double y, double z) {
         kx = x;
@@ -119,22 +134,22 @@ public class SpatialCalc {
     
     public double[][] draw() {
         double [][] rotationZ = new double [][]{
-                {cos(angleZ), -sin(angleZ), 0},
-                {sin(angleZ), cos(angleZ), 0},
-                {0, 0, 1},
-            };
+            {cos(angleZ), -sin(angleZ), 0},
+            {sin(angleZ), cos(angleZ), 0},
+            {0, 0, 1},
+        };
 
         double [][] rotationX = new double [][]{
-                {1, 0, 0},
-                {0, cos(angleX), -sin(angleX)},
-                {0, sin(angleX), cos(angleX)},
-            };
+            {1, 0, 0},
+            {0, cos(angleX), -sin(angleX)},
+            {0, sin(angleX), cos(angleX)},
+        };
 
         double [][] rotationY = new double [][]{
-                {cos(angleY), 0, sin(angleY)},
-                {0, 1, 0},
-                {-sin(angleY), 0, cos(angleY)},
-            };
+            {cos(angleY), 0, sin(angleY)},
+            {0, 1, 0},
+            {-sin(angleY), 0, cos(angleY)},
+        };
 
         double[][] projected = new double[8][];
         for(int i = 0; i < points.size(); i ++) {
@@ -150,11 +165,10 @@ public class SpatialCalc {
 
             double[] projected2d = multiplyMatrices(projection, rotated);
 
-            projected2d = scaleMatrix(projected2d, 100);
+            projected2d = scaleMatrix(projected2d, 200);
 
             projected[i] = projected2d;
         }
-
         return(projected);
     }
 }
