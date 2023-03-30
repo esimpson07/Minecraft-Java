@@ -135,6 +135,10 @@ public class SpatialCalc {
         angleZ = zAngle;
     }
     
+    public ArrayList<Vector3> getPointArray() {
+        return(points);
+    }
+    
     public double[][] draw() {
         double [][] rotationZ = new double [][]{
             {cos(angleZ), -sin(angleZ), 0},
@@ -172,6 +176,7 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
+        printMatrix(projected);
         return(projected);
     }
 }
@@ -190,9 +195,9 @@ class Vector3 {
     public void setX(double X) {x = X;}
     public void setY(double Y) {y = Y;}
     public void setZ(double Z) {z = Z;}
-    public double X() {return(x);}
-    public double Y() {return(y);}
-    public double Z() {return(z);}
+    public double getX() {return(x);}
+    public double getY() {return(y);}
+    public double getZ() {return(z);}
     
     public double[] toMatrix() {
         double [] vectorMatrix = new double[]{x,y,z};
