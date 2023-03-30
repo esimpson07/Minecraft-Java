@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 
 public class DisplayGraphics extends Canvas implements KeyListener, MouseListener, MouseMotionListener { 
     private int width = 600;
@@ -98,15 +99,31 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void paint(Graphics g) {
         super.paint(g);
         for(int j = 0; j < allCubes.length; j ++) {
-            double[][] allPoints = allCubes[j].draw();
-            double relativeAngle = (180 / Math.PI * Math.atan(allCubes[j].getX() / allCubes[j].getZ())) + angleY;
-            System.out.println(relativeAngle);
-            if(Math.abs(relativeAngle) <= acceptedFOV){
-                for (int i = 0; i < 4; i++) {
-                    connect(i, (i + 1) % 4, allPoints, g);
-                    connect(i + 4, ((i + 1) % 4) + 4, allPoints, g);
-                    connect(i, i + 4, allPoints, g);
+            double[][] drawPoints = allCubes[j].draw();
+            double relativeAngle = 0;
+            ArrayList<Vector3> cubePoints = allCubes[j].getPointArray();
+            for(int i = 0; i < 8; i++) {
+                relativeAngle = (180 / Math.PI * Math.atan(cubePoints.get(i).getX() / cubePoints.get(i).getZ())) + angleY;
+                System.out.println(relativeAngle);
+                if(relativeAngle > acceptedFOV) {
+                    double x = drawPoints[i][0];
+                    double y = drawPoints[i][1];
+                    System.out.println("point x = " + drawPoints[i][0]);
+                    System.out.println("point z = " + drawPoints[i][1]);
+                    double pxRatio = x / y;
+                    double xRatio = x / width;
+                    double yRatio = y / height;
+                    if(xRatio > yRatio && xRatio > 1) {
+                        drawPoints[i][0] = width / 2;
+                        drawPoints[i][1] = drawPoints[i][0] / pxRatio;
+                    }
                 }
+            }
+            
+            for(int i = 0; i < 4; i++) {
+                connect(i, (i + 1) % 4, drawPoints, g);
+                connect(i + 4, ((i + 1) % 4) + 4, drawPoints, g);
+                connect(i, i + 4, drawPoints, g);
             }
         }
     }
