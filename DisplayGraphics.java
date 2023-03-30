@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
 public class DisplayGraphics extends Canvas implements KeyListener, MouseListener, MouseMotionListener { 
-    private int width = 1000;
+    private int width = 600;
     private int height = 600;
     private int mXOG = width/2;
     private int mYOG = height/2;
@@ -33,9 +33,11 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     //x, z, y (side to side, height, forward to back)
     SpatialCalc cube1 = new SpatialCalc(0 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
+    /*SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube3 = new SpatialCalc(-2 + px,0,2 + py,0,angleY,0);
     SpatialCalc cube4 = new SpatialCalc(-1 + px,1,2 + py,0,angleY,0);
-    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2,cube3,cube4};
+    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2,cube3,cube4};*/
+    SpatialCalc[] allCubes = new SpatialCalc[]{cube1};
     
     public DisplayGraphics() {
         addMouseListener(this);
@@ -45,7 +47,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void mouseMoved(MouseEvent e) {
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
-        angleY += dpi * 90 * (2 * (double)(mXDist) / (double)(width));
+        angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
         angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
         mXOG = e.getX();
         mYOG = e.getY();
@@ -93,8 +95,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void paint(Graphics g) {
         super.paint(g);
         for(int j = 0; j < allCubes.length; j ++) {
-            SpatialCalc cube = allCubes[j];
-            double[][] allPoints = cube.draw();
+            double[][] allPoints = allCubes[j].draw();
 
             for (int i = 0; i < 4; i++) {
                 connect(i, (i + 1) % 4, allPoints, g);
@@ -109,25 +110,15 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double sin(double angle) {return(Math.sin((Math.PI * angle) / 180.0));}
 
     public void setPlayerPosition(double x, double y, double z) {
-        cube1.setPosition(0 - x, 0 - z, 2 - y);
-        cube2.setPosition(-1 - x, 0 - z, 2 - y);
-        cube3.setPosition(-2 - x, 0 - z, 2 - y);
-        cube4.setPosition(-1 - x, 1 - z, 2 - y);
-        allCubes[0] = cube1;
-        allCubes[1] = cube2;
-        allCubes[2] = cube3;
-        allCubes[3] = cube4;
+        for(int i = 0; i < allCubes.length; i ++) {
+            allCubes[i].setPosition(allCubes[i].getOGX() - x, allCubes[i].getOGY() - y, allCubes[i].getOGZ() - z);
+        }
     }
     
     public void setPlayerAngle(double xAngle, double yAngle, double zAngle) {
-        cube1.setAngle(xAngle,yAngle,zAngle);
-        cube2.setAngle(xAngle,yAngle,zAngle);
-        cube3.setAngle(xAngle,yAngle,zAngle);
-        cube4.setAngle(xAngle,yAngle,zAngle);
-        allCubes[0] = cube1;
-        allCubes[1] = cube2;
-        allCubes[2] = cube3;
-        allCubes[3] = cube4;
+        for(int i = 0; i < allCubes.length; i ++) {
+            allCubes[i].setAngle(xAngle,yAngle,zAngle);
+        }
     }
 
     public int round(double val) {
@@ -153,13 +144,12 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
             px += tickDist * cos(angleY + 180);
             py += tickDist * sin(angleY + 180);
         }
-        setPlayerPosition(px,py,0);
-        revalidate();
-        repaint();
+        setPlayerPosition(px,0,py);
     }
     
     private void gameLoop() {
         movePlayer(w - s, d - a);
+        repaint();
     }
 
     public static void main(String args[]) {  
@@ -170,7 +160,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         JTextField textField = new JTextField();
         textField.addKeyListener(m);
         contentPane.add(textField, BorderLayout.NORTH);
-        f.setSize(1000,600);  
+        f.setSize(m.width,m.height);  
         f.setVisible(true);  
         new javax.swing.Timer(15, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
