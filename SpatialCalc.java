@@ -40,6 +40,16 @@ public class SpatialCalc {
         double scale = Math.pow(10, places);
         return Math.round(value * scale) / scale;
     }
+    
+    private double dotProduct(Vector3 vector1, Vector3 vector2) {
+        return vector1.getX()*vector2.getX() + 
+        vector1.getY()*vector2.getY() + vector1.getZ()*vector2.getZ();
+    }
+    
+    private double findMagnitude(Vector3 vector) {
+        return(Math.sqrt(Math.pow(vector.getX(),2) + 
+        Math.pow(vector.getY(),2) + Math.pow(vector.getZ(),2)));
+    }
 
     private double[][] multiplyMatrices(double A[][], double B[][])
     {
@@ -113,6 +123,10 @@ public class SpatialCalc {
     public double getX() {return(kx);}
     public double getY() {return(ky);}
     public double getZ() {return(kz);}
+    
+    public double angleBetween(Vector3 vector1, Vector3 vector2) {
+        return((180 / Math.PI) * Math.acos(dotProduct(vector1,vector2) / (findMagnitude(vector1) * findMagnitude(vector2))));
+    }
 
     public void setPosition(double x, double y, double z) {
         kx = x;
@@ -176,7 +190,6 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
-        printMatrix(projected);
         return(projected);
     }
 }
