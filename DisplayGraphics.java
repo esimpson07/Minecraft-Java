@@ -47,8 +47,8 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
         angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
-        angleY = angleY % 360;
-        angleX = angleX % 360;
+        angleY = angleY % 180;
+        angleX = angleX % 180;
         mXOG = e.getX();
         mYOG = e.getY();
         setPlayerAngle(angleX,angleY,0);
@@ -101,7 +101,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
             for(int i = 0; i < 8; i++) {
                 relativeAngle = allCubes[j].angleBetween(cubePoints.get(i),new 
                     Vector3(sin(angleY)* cos(angleX),sin(angleX),cos(angleY) * cos(angleX)));
-                System.out.println(relativeAngle);
+                //System.out.println(relativeAngle);
             }
             
             for(int i = 0; i < 4; i++) {
@@ -157,8 +157,8 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     }
     
     private void gameLoop() {
-        movePlayer(w - s, d - a);
         repaint();
+        movePlayer(w - s, d - a);
     }
 
     public static void main(String args[]) {  
@@ -171,7 +171,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         contentPane.add(textField, BorderLayout.NORTH);
         f.setSize(m.width,m.height);  
         f.setVisible(true);  
-        new javax.swing.Timer(15, new ActionListener() {
+        new javax.swing.Timer(10, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 m.gameLoop();
             }
