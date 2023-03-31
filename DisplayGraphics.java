@@ -26,7 +26,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     
     private double tickDist = 0.1;
     private double dpi = 1;
-    private double acceptedFOV = 70;
+    private double acceptedFOV = 89.5;
     private double px = 0;
     private double py = 0;
     
@@ -34,12 +34,8 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double angleX = 0;
     //x, z, y (side to side, height, forward to back)
     SpatialCalc cube1 = new SpatialCalc(0 + px,0,2 + py,0,angleY,0);
-    SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
-    /*SpatialCalc cube2 = new SpatialCalc(-1 + px,0,2 + py,0,angleY,0);
-    SpatialCalc cube3 = new SpatialCalc(-2 + px,0,2 + py,0,angleY,0);
-    SpatialCalc cube4 = new SpatialCalc(-1 + px,1,2 + py,0,angleY,0);
-    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2,cube3,cube4};*/
-    SpatialCalc[] allCubes = new SpatialCalc[]{cube1};
+    SpatialCalc cube2 = new SpatialCalc(-3 + px,0,0 + py,0,angleY,0);
+    SpatialCalc[] allCubes = new SpatialCalc[]{cube1,cube2};
     
     public DisplayGraphics() {
         addMouseListener(this);
@@ -103,21 +99,9 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
             double relativeAngle = 0;
             ArrayList<Vector3> cubePoints = allCubes[j].getPointArray();
             for(int i = 0; i < 8; i++) {
-                relativeAngle = (180 / Math.PI * Math.atan(cubePoints.get(i).getX() / cubePoints.get(i).getZ())) + angleY;
+                relativeAngle = allCubes[j].angleBetween(cubePoints.get(i),new 
+                    Vector3(sin(angleY)* cos(angleX),sin(angleX),cos(angleY) * cos(angleX)));
                 System.out.println(relativeAngle);
-                if(relativeAngle > acceptedFOV) {
-                    double x = drawPoints[i][0];
-                    double y = drawPoints[i][1];
-                    System.out.println("point x = " + drawPoints[i][0]);
-                    System.out.println("point z = " + drawPoints[i][1]);
-                    double pxRatio = x / y;
-                    double xRatio = x / width;
-                    double yRatio = y / height;
-                    if(xRatio > yRatio && xRatio > 1) {
-                        drawPoints[i][0] = width / 2;
-                        drawPoints[i][1] = drawPoints[i][0] / pxRatio;
-                    }
-                }
             }
             
             for(int i = 0; i < 4; i++) {
@@ -149,8 +133,10 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     }
 
     private void connect(int a, int b, double[][] points, Graphics g) {
-        g.drawLine(round(points[a][0]) + (width / 2),round(points[a][1]) + (height / 2),
-            round(points[b][0]) + (width / 2),round(points[b][1]) + (height / 2));
+        if((points[a][0] != 0 && points[a][1] != 0) && (points[b][0] != 0 && points[b][1] != 0)) {
+            g.drawLine(round(points[a][0]) + (width / 2),round(points[a][1]) + (height / 2),
+                round(points[b][0]) + (width / 2),round(points[b][1]) + (height / 2));
+        }
     }
     
     private void movePlayer(int fwd, int side) {  
