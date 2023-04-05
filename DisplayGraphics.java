@@ -11,12 +11,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 public class DisplayGraphics extends Canvas implements KeyListener, MouseListener, MouseMotionListener { 
     private int width = 600;
@@ -40,7 +34,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double angleY = 0;
     private double angleX = 0;
     //x, z, y (side to side, height, forward to back)
-    SpatialCalc cube1 = new SpatialCalc(0 + px,0 + py,2 + pz,0,angleY,0);
+    SpatialCalc cube1 = new SpatialCalc(0 + px,0 + py,2 + pz,0,angleY,0,"cat.jpg");
     SpatialCalc[] allCubes = new SpatialCalc[]{cube1};
     
     public DisplayGraphics() {
@@ -52,7 +46,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
-        //angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
+        angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
         angleY = angleY % 360;
         angleX = clamp(angleX,-70,70);
         mXOG = e.getX();
