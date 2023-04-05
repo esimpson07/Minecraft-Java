@@ -11,6 +11,12 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 
 public class DisplayGraphics extends Canvas implements KeyListener, MouseListener, MouseMotionListener { 
     private int width = 600;
@@ -28,12 +34,13 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     private double dpi = 1;
     private double acceptedFOV = 89.5;
     private double px = 0;
+    private double py = 0;
     private double pz = 0;
     
     private double angleY = 0;
     private double angleX = 0;
     //x, z, y (side to side, height, forward to back)
-    SpatialCalc cube1 = new SpatialCalc(0 + px,0,2 + pz,0,angleY,0);
+    SpatialCalc cube1 = new SpatialCalc(0 + px,0 + py,2 + pz,0,angleY,0);
     SpatialCalc[] allCubes = new SpatialCalc[]{cube1};
     
     public DisplayGraphics() {
@@ -45,9 +52,9 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         mXDist = mXOG - e.getX();
         mYDist = mYOG - e.getY();
         angleY += dpi * 180 * (2 * (double)(mXDist) / (double)(width));
-        angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
+        //angleX -= dpi * 180 * (2 * (double)(mYDist) / (double)(width));
         angleY = angleY % 360;
-        angleX = clamp(angleX,-90,90);
+        angleX = clamp(angleX,-70,70);
         mXOG = e.getX();
         mYOG = e.getY();
         setPlayerAngle(angleX,angleY,0);
@@ -92,35 +99,36 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
     public void keyTyped(KeyEvent event) {}
     
     public void paint(Graphics g) {
-        super.paint(g);
+        for(int i = 0; i < allCubes.length; i ++) {
+            allCubes[i].draw(g);
+        }
+        /*double[][] allPoints = new double[8 * allCubes.length][2];
         for(int j = 0; j < allCubes.length; j ++) {
-            double[][] drawPoints = allCubes[j].draw();
+            double[][] drawPoints = allCubes[j].draw(g);
             double correctAngle = 0;
             double relativeAngle = 0;
             ArrayList<Vector3> cubePoints = allCubes[j].getPointArray();
             for(int i = 0; i < 8; i++) {
                 relativeAngle = (180 / Math.PI) * Math.atan(cubePoints.get(i).getX() / cubePoints.get(i).getZ());
-                System.out.println("relative = " + relativeAngle);
-                System.out.println("angle y = " + angleY);
                 double xDiff = cubePoints.get(i).getX() - px;
                 double zDiff = cubePoints.get(i).getZ() - pz;
                 double translatedX = (xDiff * cos(-angleY)) + (zDiff * sin(-angleY));
                 double translatedZ = (zDiff * cos(-angleY)) + (xDiff * sin(-angleY));
-                if(translatedZ <= 0) {
+                if(translatedZ <= 0 || (round(Math.abs(relativeAngle + angleY)) >= 90 && round(Math.abs(relativeAngle + angleY)) <= 135) ||
+                (round(Math.abs(relativeAngle + angleY)) >= 270 && round(Math.abs(relativeAngle + angleY)) <= 315)) {
                     drawPoints[i][0] = 0;
                     drawPoints[i][1] = 0;
-                } else {
-                    //if(drawPoints[i][0] >= width * 2 || drawPoints[i][0] <= -width * 2) {drawPoints[i][0] = 0;}
-                    //if(drawPoints[i][1] >= height * 2 || drawPoints[i][1] <= -height * 2) {drawPoints[i][1] = 0;}
                 }
-            }
-            
-            for(int i = 0; i < 4; i++) {
-                connect(i, (i + 1) % 4, drawPoints, g);
-                connect(i + 4, ((i + 1) % 4) + 4, drawPoints, g);
-                connect(i, i + 4, drawPoints, g);
+                allPoints[i + (8 * j)][0] = drawPoints[i][0];
+                allPoints[i + (8 * j)][1] = drawPoints[i][1];
             }
         }
+        super.paint(g);
+        for(int i = 0; i < 4; i++) {
+            connect(i, (i + 1) % 4, allPoints, g);
+            connect(i + 4, ((i + 1) % 4) + 4, allPoints, g);
+            connect(i, i + 4, allPoints, g);
+        }*/
     }
 
     private double cos(double angle) {return(Math.cos((Math.PI * angle) / 180.0));}
@@ -159,17 +167,20 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         if(fwd == 1) {
             px += tickDist * cos(angleY + 90);
             pz += tickDist * sin(angleY + 90);
+            setPlayerPosition(px,0,pz);
         } else if(fwd == -1) {
             px += tickDist * cos(angleY - 90);
             pz += tickDist * sin(angleY - 90);
+            setPlayerPosition(px,0,pz);
         } else if(side == 1) {
             px += tickDist * cos(angleY);
             pz += tickDist * sin(angleY);
+            setPlayerPosition(px,0,pz);
         } else if(side == -1) {
             px += tickDist * cos(angleY + 180);
             pz += tickDist * sin(angleY + 180);
+            setPlayerPosition(px,0,pz);
         }
-        setPlayerPosition(px,0,pz);
     }
     
     private void gameLoop() {
@@ -187,7 +198,7 @@ public class DisplayGraphics extends Canvas implements KeyListener, MouseListene
         contentPane.add(textField, BorderLayout.NORTH);
         f.setSize(m.width,m.height);  
         f.setVisible(true);  
-        new javax.swing.Timer(100, new ActionListener() {
+        new javax.swing.Timer(35, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 m.gameLoop();
             }
