@@ -149,12 +149,19 @@ public class SpatialCalc {
     
     private int findIndex(double array[], double val)
     {
+        int count = 0;
+        int index = 0;
         for(int i = 0; i < array.length; i ++) {
             if (array[i] == val) {
-                return i;
+                index = i;
+                count ++;
             }
         }
-        return -1;
+        if(count == 1) {
+            return(index);
+        } else {
+            return -1;
+        }
     }
 
     public double getOGX() {return(trueX);}
@@ -263,9 +270,13 @@ public class SpatialCalc {
         double f6 = Math.sqrt(Math.pow(faces.get(5).getX(),2) + Math.pow(faces.get(5).getY(),2) + Math.pow(faces.get(5).getZ(),2));
         double[] nums = new double[]{f1,f2,f3,f4,f5,f6};
         double[] sorted = sortArray(nums);
+        printMatrix(sorted);
         int in1 = findIndex(nums,sorted[0]);
         int in2 = findIndex(nums,sorted[1]);
         int in3 = findIndex(nums,sorted[2]);
+        System.out.println(in1);
+        System.out.println(in2);
+        System.out.println(in3);
         for(int i = 0; i < 6; i ++) {
             if(in3 == i) {
                 int[] cornerPoints = getFacePointsAssociated(i);
@@ -343,15 +354,16 @@ public class SpatialCalc {
             projected[i] = projected2d;
         }
         printMatrix(projected);
-        
         refreshFaceArray();
         double[][] pointsToDraw = getNearestFacePoints(projected);
-        for(int i = 0; i < 3; i ++) {
+        /*for(int i = 0; i < 3; i ++) {
             BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(pointsToDraw[(4 * i)][0],pointsToDraw[(4 * i)][1]), new Point2D.Double(pointsToDraw[(4 * i) + 1][0],pointsToDraw[(4 * i) + 1][1]),
             new Point2D.Double(pointsToDraw[(4 * i) + 2][0],pointsToDraw[(4 * i) + 2][1]), new Point2D.Double(pointsToDraw[(4 * i) + 3][0],pointsToDraw[(4 * i) + 3][1]));
             g.drawImage(image, 0, 0, null);
-        }
-        
+        }*/
+        BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(-100,-100), new Point2D.Double(-100,100),
+            new Point2D.Double(-60,60), new Point2D.Double(-60,-60));
+            g.drawImage(image, 0, 0, null);
         return(projected);
     }
 }
