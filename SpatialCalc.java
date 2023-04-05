@@ -3,21 +3,33 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.awt.Graphics;
+import javax.imageio.ImageIO;
 
 public class SpatialCalc {
-    double angleX;
-    double angleY;
-    double angleZ;
-    double kx;
-    double ky;
-    double kz;
-    double trueX;
-    double trueY;
-    double trueZ;
+    private double angleX;
+    private double angleY;
+    private double angleZ;
+    private double kx;
+    private double ky;
+    private double kz;
+    private double trueX;
+    private double trueY;
+    private double trueZ;
+    private final BufferedImage inputImage;
     ArrayList<Vector3> points = new ArrayList<Vector3>();
     ArrayList<Vector3> faces = new ArrayList<Vector3>();
 
-    public SpatialCalc(double startX, double startY, double startZ, double xAngle, double yAngle, double zAngle) {        
+    public SpatialCalc(double startX, double startY, double startZ, double xAngle, double yAngle, double zAngle, String filepath) {      
+        try
+        {
+            inputImage = ImageIO.read(new File("cat.jpg"));
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            while(true) {}
+        }
         kx = startX;
         ky = startY;
         kz = startZ;
@@ -254,9 +266,6 @@ public class SpatialCalc {
         int in1 = findIndex(nums,sorted[0]);
         int in2 = findIndex(nums,sorted[1]);
         int in3 = findIndex(nums,sorted[2]);
-        System.out.println(in1);
-        System.out.println(in2);
-        System.out.println(in3);
         for(int i = 0; i < 6; i ++) {
             if(in3 == i) {
                 int[] cornerPoints = getFacePointsAssociated(i);
@@ -270,8 +279,6 @@ public class SpatialCalc {
                 for(int h = 0; h < 4; h ++) {
                     retPoints[h + 4][0] = projectedPoints[cornerPoints[h]][0];
                     retPoints[h + 4][1] = projectedPoints[cornerPoints[h]][1];
-                    System.out.println(projectedPoints[cornerPoints[h]][0]);
-                    System.out.println(projectedPoints[cornerPoints[h]][1]);
                 }
             }
             if(in1 == i) {
@@ -282,6 +289,7 @@ public class SpatialCalc {
                 }
             }
         }
+        printMatrix(retPoints);
         return(retPoints);
     }
 
@@ -334,11 +342,12 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
+        printMatrix(projected);
         
         refreshFaceArray();
         double[][] pointsToDraw = getNearestFacePoints(projected);
         for(int i = 0; i < 3; i ++) {
-            BufferedImage image = Pseudo3D.computeImage(texture, new Point2D.Double(pointsToDraw[(4 * i)][0],pointsToDraw[(4 * i)][1]), new Point2D.Double(pointsToDraw[(4 * i) + 1][0],pointsToDraw[(4 * i) + 1][1]),
+            BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(pointsToDraw[(4 * i)][0],pointsToDraw[(4 * i)][1]), new Point2D.Double(pointsToDraw[(4 * i) + 1][0],pointsToDraw[(4 * i) + 1][1]),
             new Point2D.Double(pointsToDraw[(4 * i) + 2][0],pointsToDraw[(4 * i) + 2][1]), new Point2D.Double(pointsToDraw[(4 * i) + 3][0],pointsToDraw[(4 * i) + 3][1]));
             g.drawImage(image, 0, 0, null);
         }
