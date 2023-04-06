@@ -262,21 +262,45 @@ public class SpatialCalc {
     
     public double[][] getNearestFacePoints(double[][] projectedPoints) {
         double[][] retPoints = new double[12][2];
+        /*System.out.println("X0 = " + faces.get(0).getX());
+        System.out.println("Y0 = " + faces.get(0).getY());
+        System.out.println("Z0 = " + faces.get(0).getZ());
+        System.out.println("X1 = " + faces.get(1).getX());
+        System.out.println("Y1 = " + faces.get(1).getY());
+        System.out.println("Z1 = " + faces.get(1).getZ());
+        System.out.println("X2 = " + faces.get(2).getX());
+        System.out.println("Y2 = " + faces.get(2).getY());
+        System.out.println("Z2 = " + faces.get(2).getZ());
+        System.out.println("X3 = " + faces.get(3).getX());
+        System.out.println("Y3 = " + faces.get(3).getY());
+        System.out.println("Z3 = " + faces.get(3).getZ());
+        System.out.println("X4 = " + faces.get(4).getX());
+        System.out.println("Y4 = " + faces.get(4).getY());
+        System.out.println("Z4 = " + faces.get(4).getZ());
+        System.out.println("X5 = " + faces.get(5).getX());
+        System.out.println("Y5 = " + faces.get(5).getY());
+        System.out.println("Z5 = " + faces.get(5).getZ());*/
         double f1 = Math.sqrt(Math.pow(faces.get(0).getX(),2) + Math.pow(faces.get(0).getY(),2) + Math.pow(faces.get(0).getZ(),2));
         double f2 = Math.sqrt(Math.pow(faces.get(1).getX(),2) + Math.pow(faces.get(1).getY(),2) + Math.pow(faces.get(1).getZ(),2));
         double f3 = Math.sqrt(Math.pow(faces.get(2).getX(),2) + Math.pow(faces.get(2).getY(),2) + Math.pow(faces.get(2).getZ(),2));
         double f4 = Math.sqrt(Math.pow(faces.get(3).getX(),2) + Math.pow(faces.get(3).getY(),2) + Math.pow(faces.get(3).getZ(),2));
         double f5 = Math.sqrt(Math.pow(faces.get(4).getX(),2) + Math.pow(faces.get(4).getY(),2) + Math.pow(faces.get(4).getZ(),2));
         double f6 = Math.sqrt(Math.pow(faces.get(5).getX(),2) + Math.pow(faces.get(5).getY(),2) + Math.pow(faces.get(5).getZ(),2));
+        System.out.println(f1);
+        System.out.println(f2);
+        System.out.println(f3);
+        System.out.println(f4);
+        System.out.println(f5);
+        System.out.println(f6);
         double[] nums = new double[]{f1,f2,f3,f4,f5,f6};
         double[] sorted = sortArray(nums);
         printMatrix(sorted);
-        int in1 = findIndex(nums,sorted[0]);
-        int in2 = findIndex(nums,sorted[1]);
-        int in3 = findIndex(nums,sorted[2]);
-        System.out.println(in1);
-        System.out.println(in2);
-        System.out.println(in3);
+        int in1 = findIndex(nums,sorted[5]);
+        int in2 = findIndex(nums,sorted[4]);
+        int in3 = findIndex(nums,sorted[3]);
+        System.out.println("in1 = " + in1);
+        System.out.println("in2 = " + in2);
+        System.out.println("in3 = " + in3);
         for(int i = 0; i < 6; i ++) {
             if(in3 == i) {
                 int[] cornerPoints = getFacePointsAssociated(i);
@@ -300,7 +324,6 @@ public class SpatialCalc {
                 }
             }
         }
-        printMatrix(retPoints);
         return(retPoints);
     }
 
@@ -353,17 +376,57 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
-        printMatrix(projected);
         refreshFaceArray();
         double[][] pointsToDraw = getNearestFacePoints(projected);
-        /*for(int i = 0; i < 3; i ++) {
-            BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(pointsToDraw[(4 * i)][0],pointsToDraw[(4 * i)][1]), new Point2D.Double(pointsToDraw[(4 * i) + 1][0],pointsToDraw[(4 * i) + 1][1]),
-            new Point2D.Double(pointsToDraw[(4 * i) + 2][0],pointsToDraw[(4 * i) + 2][1]), new Point2D.Double(pointsToDraw[(4 * i) + 3][0],pointsToDraw[(4 * i) + 3][1]));
-            g.drawImage(image, 0, 0, null);
-        }*/
-        BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(-100,-100), new Point2D.Double(-100,100),
-            new Point2D.Double(-60,60), new Point2D.Double(-60,-60));
-            g.drawImage(image, 0, 0, null);
+        /*BufferedImage image = Pseudo3D.computeImage(inputImage, 
+            new Point2D.Double(pointsToDraw[8][0] + 300,pointsToDraw[8][1] + 300), //TODO: fix this mess
+            new Point2D.Double(pointsToDraw[9][0] + 300,pointsToDraw[9][1] + 300), 
+            new Point2D.Double(pointsToDraw[11][0] + 300,pointsToDraw[11][1] + 300),
+            new Point2D.Double(pointsToDraw[10][0] + 300,pointsToDraw[10][1] + 300));
+            g.drawImage(image, 0, 0, null);*/
+        printMatrix(pointsToDraw);
+        for(int i = 0; i < 3; i ++) {
+            if(pointsToDraw[(4 * i)][0] != 0 && pointsToDraw[(4 * i)][1] != 0) {
+                Point2D avgPoint = new Point2D.Double((pointsToDraw[(4 * i)][0] + pointsToDraw[(4 * i) + 1][0] + 
+                pointsToDraw[(4 * i) + 2][0] + pointsToDraw[(4 * i) + 3][0]) / 4,(pointsToDraw[(4 * i)][1] + 
+                pointsToDraw[(4 * i) + 1][1] + pointsToDraw[(4 * i) + 2][1] + pointsToDraw[(4 * i) + 3][1]) / 4);
+                Point2D p0 = new Point2D.Double(0,0);
+                Point2D p1 = new Point2D.Double(0,0);
+                Point2D p2 = new Point2D.Double(0,0);
+                Point2D p3 = new Point2D.Double(0,0);
+                /*
+                 * 
+                    this.p0 = new Point2D.Double(0,0);
+                    this.p1 = new Point2D.Double(0,400);
+                    this.p2 = new Point2D.Double(450,300);
+                    this.p3 = new Point2D.Double(430,100);
+                 */
+                for(int j = 0; j < 4; j ++) {
+                    if(pointsToDraw[(4 * i) + j][0] < avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] < avgPoint.getY()){
+                        p0 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
+                    } else if(pointsToDraw[(4 * i) + j][0] < avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] > avgPoint.getY()){
+                        p1 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
+                    } else if(pointsToDraw[(4 * i) + j][0] > avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] > avgPoint.getY()){
+                        p2 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
+                    } else if(pointsToDraw[(4 * i) + j][0] > avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] < avgPoint.getY()){
+                        p3 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
+                    }
+                }
+                System.out.println(p0.getX());
+                System.out.println(p0.getY());
+                System.out.println(p1.getX());
+                System.out.println(p1.getY());
+                System.out.println(p2.getX());
+                System.out.println(p2.getY());
+                System.out.println(p3.getX());
+                System.out.println(p3.getY());
+                    BufferedImage image = Pseudo3D.computeImage(inputImage, p0,p1,p2,p3);
+                g.drawImage(image, 0, 0, null);
+            }
+        }
+        /*BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(-100 + 300,-100 + 300), new Point2D.Double(-100 + 300,100 + 300),
+            new Point2D.Double(-60 + 300,60 + 300), new Point2D.Double(-60 + 300,-60 + 300));
+            g.drawImage(image, 0, 0, null);*/
         return(projected);
     }
 }
