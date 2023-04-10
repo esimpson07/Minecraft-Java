@@ -47,6 +47,12 @@ public class SpatialCalc {
         points.add(new Vector3(0.5 + kx, -0.5 + ky, 0.5 + kz));
         points.add(new Vector3(0.5 + kx, 0.5 + ky, 0.5 + kz));
         points.add(new Vector3(-0.5 + kx, 0.5 + ky, 0.5 + kz));
+        faces.add(new Vector3(kx - 0.5, ky, kz));
+        faces.add(new Vector3(kx + 0.5, ky, kz));
+        faces.add(new Vector3(kx, ky - 0.5, kz));
+        faces.add(new Vector3(kx, ky + 0.5, kz));
+        faces.add(new Vector3(kx, ky, kz - 0.5));
+        faces.add(new Vector3(kx, ky, kz + 0.5));
     }
 
     private double cos(double angle) {return(Math.cos((Math.PI * angle) / 180.0));}
@@ -135,16 +141,17 @@ public class SpatialCalc {
     }
     
     private double[] sortArray(double[] array) {
-        for (int j = 0; j < 5; j++) {
-            for (int i = 5; i > j; i--) {
-                if (array[i - 1] < array[i]) {
-                    double swp = array[i];
-                    array[i] = array[i - 1];
-                    array[i - 1] = swp;
+        double[] retVal = array.clone();
+        for (int j = 0; j < retVal.length - 1; j++) {
+            for (int i = retVal.length - 1; i > j; i--) {
+                if (retVal[i - 1] < retVal[i]) {
+                    double swp = retVal[i];
+                    retVal[i] = retVal[i - 1];
+                    retVal[i - 1] = swp;
                 }
             }
         }
-        return(array);
+        return(retVal);
     }
     
     private int findIndex(double array[], double val)
@@ -194,6 +201,13 @@ public class SpatialCalc {
         points.add(new Vector3(0.5 + kx, 0.5 + ky, 0.5 + kz));//6
         points.add(new Vector3(-0.5 + kx, 0.5 + ky, 0.5 + kz));//7
         faces.clear();
+        faces.add(new Vector3(kx - 0.5, ky, kz));
+        faces.add(new Vector3(kx + 0.5, ky, kz));
+        faces.add(new Vector3(kx, ky - 0.5, kz));
+        faces.add(new Vector3(kx, ky + 0.5, kz));
+        faces.add(new Vector3(kx, ky, kz - 0.5));
+        faces.add(new Vector3(kx, ky, kz + 0.5));
+        /*
         faces.add(new Vector3((points.get(0).getX() + points.get(3).getX() + points.get(4).getX() + points.get(7).getX()) / 4,
                 (points.get(0).getY() + points.get(3).getY() + points.get(4).getY() + points.get(7).getY()) / 4,
                 (points.get(0).getZ() + points.get(3).getZ() + points.get(4).getZ() + points.get(7).getZ()) / 4));
@@ -211,7 +225,7 @@ public class SpatialCalc {
                 (points.get(0).getZ() + points.get(1).getZ() + points.get(2).getZ() + points.get(3).getZ()) / 4));
         faces.add(new Vector3((points.get(4).getX() + points.get(5).getX() + points.get(6).getX() + points.get(7).getX()) / 4,
                 (points.get(4).getY() + points.get(5).getY() + points.get(6).getY() + points.get(7).getY()) / 4,
-                (points.get(4).getZ() + points.get(5).getZ() + points.get(6).getZ() + points.get(7).getZ()) / 4));
+                (points.get(4).getZ() + points.get(5).getZ() + points.get(6).getZ() + points.get(7).getZ()) / 4));*/
     }
 
     public void setAngle(double xAngle, double yAngle, double zAngle) {
@@ -222,24 +236,12 @@ public class SpatialCalc {
 
     public void refreshFaceArray() {
         faces.clear();
-        faces.add(new Vector3((points.get(0).getX() + points.get(3).getX() + points.get(4).getX() + points.get(7).getX()) / 4,
-                (points.get(0).getY() + points.get(3).getY() + points.get(4).getY() + points.get(7).getY()) / 4,
-                (points.get(0).getZ() + points.get(3).getZ() + points.get(4).getZ() + points.get(7).getZ()) / 4));
-        faces.add(new Vector3((points.get(1).getX() + points.get(2).getX() + points.get(5).getX() + points.get(6).getX()) / 4,
-                (points.get(1).getY() + points.get(2).getY() + points.get(5).getY() + points.get(6).getY()) / 4,
-                (points.get(1).getZ() + points.get(2).getZ() + points.get(5).getZ() + points.get(6).getZ()) / 4));
-        faces.add(new Vector3((points.get(0).getX() + points.get(1).getX() + points.get(4).getX() + points.get(5).getX()) / 4,
-                (points.get(0).getY() + points.get(1).getY() + points.get(4).getY() + points.get(5).getY()) / 4,
-                (points.get(0).getZ() + points.get(1).getZ() + points.get(4).getZ() + points.get(5).getZ()) / 4));
-        faces.add(new Vector3((points.get(2).getX() + points.get(3).getX() + points.get(6).getX() + points.get(7).getX()) / 4,
-                (points.get(2).getY() + points.get(3).getY() + points.get(6).getY() + points.get(7).getY()) / 4,
-                (points.get(2).getZ() + points.get(3).getZ() + points.get(6).getZ() + points.get(7).getZ()) / 4));
-        faces.add(new Vector3((points.get(0).getX() + points.get(1).getX() + points.get(2).getX() + points.get(3).getX()) / 4,
-                (points.get(0).getY() + points.get(1).getY() + points.get(2).getY() + points.get(3).getY()) / 4,
-                (points.get(0).getZ() + points.get(1).getZ() + points.get(2).getZ() + points.get(3).getZ()) / 4));
-        faces.add(new Vector3((points.get(4).getX() + points.get(5).getX() + points.get(6).getX() + points.get(7).getX()) / 4,
-                (points.get(4).getY() + points.get(5).getY() + points.get(6).getY() + points.get(7).getY()) / 4,
-                (points.get(4).getZ() + points.get(5).getZ() + points.get(6).getZ() + points.get(7).getZ()) / 4));
+        faces.add(new Vector3(kx - 0.5, ky, kz));
+        faces.add(new Vector3(kx + 0.5, ky, kz));
+        faces.add(new Vector3(kx, ky - 0.5, kz));
+        faces.add(new Vector3(kx, ky + 0.5, kz));
+        faces.add(new Vector3(kx, ky, kz - 0.5));
+        faces.add(new Vector3(kx, ky, kz + 0.5));
     }
     
     public int[] getFacePointsAssociated(int face) {
@@ -262,7 +264,7 @@ public class SpatialCalc {
     
     public double[][] getNearestFacePoints(double[][] projectedPoints) {
         double[][] retPoints = new double[12][2];
-        /*System.out.println("X0 = " + faces.get(0).getX());
+        System.out.println("X0 = " + faces.get(0).getX());
         System.out.println("Y0 = " + faces.get(0).getY());
         System.out.println("Z0 = " + faces.get(0).getZ());
         System.out.println("X1 = " + faces.get(1).getX());
@@ -279,25 +281,22 @@ public class SpatialCalc {
         System.out.println("Z4 = " + faces.get(4).getZ());
         System.out.println("X5 = " + faces.get(5).getX());
         System.out.println("Y5 = " + faces.get(5).getY());
-        System.out.println("Z5 = " + faces.get(5).getZ());*/
+        System.out.println("Z5 = " + faces.get(5).getZ());
         double f1 = Math.sqrt(Math.pow(faces.get(0).getX(),2) + Math.pow(faces.get(0).getY(),2) + Math.pow(faces.get(0).getZ(),2));
         double f2 = Math.sqrt(Math.pow(faces.get(1).getX(),2) + Math.pow(faces.get(1).getY(),2) + Math.pow(faces.get(1).getZ(),2));
         double f3 = Math.sqrt(Math.pow(faces.get(2).getX(),2) + Math.pow(faces.get(2).getY(),2) + Math.pow(faces.get(2).getZ(),2));
         double f4 = Math.sqrt(Math.pow(faces.get(3).getX(),2) + Math.pow(faces.get(3).getY(),2) + Math.pow(faces.get(3).getZ(),2));
         double f5 = Math.sqrt(Math.pow(faces.get(4).getX(),2) + Math.pow(faces.get(4).getY(),2) + Math.pow(faces.get(4).getZ(),2));
         double f6 = Math.sqrt(Math.pow(faces.get(5).getX(),2) + Math.pow(faces.get(5).getY(),2) + Math.pow(faces.get(5).getZ(),2));
-        System.out.println(f1);
-        System.out.println(f2);
-        System.out.println(f3);
-        System.out.println(f4);
-        System.out.println(f5);
-        System.out.println(f6);
-        double[] nums = new double[]{f1,f2,f3,f4,f5,f6};
-        double[] sorted = sortArray(nums);
-        printMatrix(sorted);
-        int in1 = findIndex(nums,sorted[5]);
-        int in2 = findIndex(nums,sorted[4]);
-        int in3 = findIndex(nums,sorted[3]);
+        double[] originalDistances = new double[]{f1,f2,f3,f4,f5,f6};
+        double[] sortedDistances = sortArray(originalDistances);
+        System.out.println("originalDistances");
+        printMatrix(originalDistances);
+        System.out.println("sortedDistances");
+        printMatrix(sortedDistances);
+        int in1 = findIndex(originalDistances,sortedDistances[5]);
+        int in2 = findIndex(originalDistances,sortedDistances[4]);
+        int in3 = findIndex(originalDistances,sortedDistances[3]);
         System.out.println("in1 = " + in1);
         System.out.println("in2 = " + in2);
         System.out.println("in3 = " + in3);
@@ -376,57 +375,36 @@ public class SpatialCalc {
 
             projected[i] = projected2d;
         }
-        refreshFaceArray();
+        //refreshFaceArray();
         double[][] pointsToDraw = getNearestFacePoints(projected);
-        /*BufferedImage image = Pseudo3D.computeImage(inputImage, 
-            new Point2D.Double(pointsToDraw[8][0] + 300,pointsToDraw[8][1] + 300), //TODO: fix this mess
-            new Point2D.Double(pointsToDraw[9][0] + 300,pointsToDraw[9][1] + 300), 
-            new Point2D.Double(pointsToDraw[11][0] + 300,pointsToDraw[11][1] + 300),
-            new Point2D.Double(pointsToDraw[10][0] + 300,pointsToDraw[10][1] + 300));
-            g.drawImage(image, 0, 0, null);*/
-        printMatrix(pointsToDraw);
         for(int i = 0; i < 3; i ++) {
             if(pointsToDraw[(4 * i)][0] != 0 && pointsToDraw[(4 * i)][1] != 0) {
                 Point2D avgPoint = new Point2D.Double((pointsToDraw[(4 * i)][0] + pointsToDraw[(4 * i) + 1][0] + 
                 pointsToDraw[(4 * i) + 2][0] + pointsToDraw[(4 * i) + 3][0]) / 4,(pointsToDraw[(4 * i)][1] + 
                 pointsToDraw[(4 * i) + 1][1] + pointsToDraw[(4 * i) + 2][1] + pointsToDraw[(4 * i) + 3][1]) / 4);
+                double[] sortedX = sortArray(new double[]{pointsToDraw[(4 * i)][0],pointsToDraw[(4 * i) + 1][0],pointsToDraw[(4 * i)  + 2][0],pointsToDraw[(4 * i) + 3][0]});
+                double[] sortedY = sortArray(new double[]{pointsToDraw[(4 * i)][1],pointsToDraw[(4 * i) + 1][1],pointsToDraw[(4 * i)  + 2][1],pointsToDraw[(4 * i) + 3][1]});
+                printMatrix(sortedX);
+                printMatrix(sortedY);
                 Point2D p0 = new Point2D.Double(0,0);
                 Point2D p1 = new Point2D.Double(0,0);
                 Point2D p2 = new Point2D.Double(0,0);
                 Point2D p3 = new Point2D.Double(0,0);
-                /*
-                 * 
-                    this.p0 = new Point2D.Double(0,0);
-                    this.p1 = new Point2D.Double(0,400);
-                    this.p2 = new Point2D.Double(450,300);
-                    this.p3 = new Point2D.Double(430,100);
-                 */
-                for(int j = 0; j < 4; j ++) {
-                    if(pointsToDraw[(4 * i) + j][0] < avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] < avgPoint.getY()){
+                for(int j = 0; j < 4; j ++) { //Fix this: find the two x values that are the lowest two and the two that are the highest two
+                    if(findIndex(sortedX,pointsToDraw[(4 * i) + j][0]) <= 1  && findIndex(sortedY,pointsToDraw[(4 * i) + j][1]) <= 1){
                         p0 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
-                    } else if(pointsToDraw[(4 * i) + j][0] < avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] > avgPoint.getY()){
+                    } else if(findIndex(sortedX,pointsToDraw[(4 * i) + j][0]) <= 1  && findIndex(sortedY,pointsToDraw[(4 * i) + j][1]) > 1){
                         p1 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
-                    } else if(pointsToDraw[(4 * i) + j][0] > avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] > avgPoint.getY()){
+                    } else if(findIndex(sortedX,pointsToDraw[(4 * i) + j][0]) > 1  && findIndex(sortedY,pointsToDraw[(4 * i) + j][1]) > 1){
                         p2 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
-                    } else if(pointsToDraw[(4 * i) + j][0] > avgPoint.getX()  && pointsToDraw[(4 * i) + j][1] < avgPoint.getY()){
+                    } else if(findIndex(sortedX,pointsToDraw[(4 * i) + j][0]) > 1  && findIndex(sortedY,pointsToDraw[(4 * i) + j][1]) <= 1){
                         p3 = new Point2D.Double(pointsToDraw[(4 * i) + j][0] + 300,pointsToDraw[(4 * i) + j][1] + 300);
                     }
                 }
-                System.out.println(p0.getX());
-                System.out.println(p0.getY());
-                System.out.println(p1.getX());
-                System.out.println(p1.getY());
-                System.out.println(p2.getX());
-                System.out.println(p2.getY());
-                System.out.println(p3.getX());
-                System.out.println(p3.getY());
-                    BufferedImage image = Pseudo3D.computeImage(inputImage, p0,p1,p2,p3);
+                BufferedImage image = Pseudo3D.computeImage(inputImage, p0,p1,p2,p3);
                 g.drawImage(image, 0, 0, null);
             }
         }
-        /*BufferedImage image = Pseudo3D.computeImage(inputImage, new Point2D.Double(-100 + 300,-100 + 300), new Point2D.Double(-100 + 300,100 + 300),
-            new Point2D.Double(-60 + 300,60 + 300), new Point2D.Double(-60 + 300,-60 + 300));
-            g.drawImage(image, 0, 0, null);*/
         return(projected);
     }
 }
@@ -679,5 +657,4 @@ class Pseudo3D
             m22 = nm22;
         }
     }
-
 }
