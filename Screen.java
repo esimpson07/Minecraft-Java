@@ -23,11 +23,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
     
     static ArrayList<Cube> Cubes = new ArrayList<Cube>();
-    //static ArrayList<Prism> Prisms = new ArrayList<Prism>();
-    //static ArrayList<Pyramid> Pyramids = new ArrayList<Pyramid>();
     
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
+    private int selectedCube = -1;
+    private int selectedFace = -1;
 
     //Used for keeping mouse in center
     Robot r;
@@ -40,12 +40,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static double zoom = 1000, MinZoom = 500, MaxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
     
     //FPS is a bit primitive, you can set the MaxFPS as high as u want
-    double drawFPS = 0, MaxFPS = 1000, SleepTime = 1000.0/MaxFPS, LastRefresh = 0, StartTime = System.currentTimeMillis(), LastFPSCheck = 0, Checks = 0;
+    double drawFPS = 0, MaxFPS = 120, SleepTime = 1000.0/MaxFPS, LastRefresh = 0, StartTime = System.currentTimeMillis(), LastFPSCheck = 0, Checks = 0;
     //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
-    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = 0;
+    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4;
 
-    double movementFactor = 0.07;
+    double movementFactor = 0.05;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -68,11 +68,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         invisibleMouse();
         
-        Cubes.add(new Cube(0, -5, 0, 2, 2, 2, gray));
         Cubes.add(new Cube(18, -5, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(20, -5, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(22, -5, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(20, -5, 2, 2, 2, 2, gray));
     }    
     
     public void paintComponent(Graphics g)
@@ -108,8 +104,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         //FPS display
         g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
         
-//        repaintTime = System.currentTimeMillis() - repaintTime; 
-//        System.out.println(repaintTime);
         SleepAndRefresh();
     }
     
@@ -183,8 +177,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     void ControlSunAndLight()
     {
-        //SunPos += 0.005; 
-        SunPos = 0;
         double mapSize = 2500; //50^2
         LightDir[0] = mapSize/2 - (mapSize/2 + Math.cos(SunPos) * mapSize * 10);
         LightDir[1] = mapSize/2 - (mapSize/2 + Math.sin(SunPos) * mapSize * 10);
@@ -197,6 +189,17 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         double xMove = 0, yMove = 0, zMove = 0;
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
+        
+        double[] attrs = Cubes.get(0).getAttributes();
+        double x = attrs[0] + (attrs[3] / 2);
+        double y = attrs[1] + (attrs[4] / 2);
+        double z = attrs[2] + (attrs[5] / 2);
+        double px = ViewFrom[0];
+        double py = ViewFrom[1];
+        double pz = ViewFrom[2];
+        double xDiff = Math.abs(x - px);
+        double yDiff = Math.abs(y - py);
+        double zDiff = Math.abs(z - pz);
         
         if(Keys[0])
         {
@@ -231,7 +234,24 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         {
             zMove -= movementFactor;
         }
-        
+
+        if(zDiff <= 2 && xDiff <= 1 && yDiff <= 1) {
+            System.out.println(px - x);
+            System.out.println(py - y);
+            if(yDiff > xDiff && py > y + (1 - movementFactor)) {
+                ViewFrom[1] = y + 1;
+            } else if(yDiff > xDiff && py < y - (1 - movementFactor)) {
+                ViewFrom[1] = y - 1;
+            } else if(xDiff > yDiff && px > x + (1 - movementFactor)) {
+                ViewFrom[0] = x + 1;
+            } else if(xDiff > yDiff && px < x - (1 - movementFactor)) {
+                ViewFrom[0] = x - 1;
+            } else if(zDiff < 2 && pz > z + (1 - movementFactor)) {
+                ViewFrom[2] = z + 2;
+            } else if(zDiff < 2 && pz < z - (1 - movementFactor)) {
+                ViewFrom[2] = z - 2;
+            }
+        }
         Vector MoveVector = new Vector(xMove, yMove, zMove);
         MoveTo(ViewFrom[0] + MoveVector.x * movementFactor, ViewFrom[1] + MoveVector.y * movementFactor, ViewFrom[2] + MoveVector.z * movementFactor);
     }
@@ -247,13 +267,17 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     void setPolygonOver()
     {
         PolygonOver = null;
-        for(int i = NewOrder.length-1; i >= 0; i--)
+        selectedCube = -1;
+        for(int i = NewOrder.length-1; i >= 0; i --) {
             if(DPolygons.get(NewOrder[i]).DrawablePolygon.MouseOver() && DPolygons.get(NewOrder[i]).draw 
                     && DPolygons.get(NewOrder[i]).DrawablePolygon.visible)
             {
                 PolygonOver = DPolygons.get(NewOrder[i]).DrawablePolygon;
+                selectedCube = NewOrder[i] / 6;
+                selectedFace = NewOrder[i] % 6;
                 break;
             }
+        }
     }
 
     void MouseMovement(double NewMouseX, double NewMouseY)
@@ -322,54 +346,52 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
 
     public void keyTyped(KeyEvent e) {
+    
     }
 
-    public void mouseDragged(MouseEvent arg0) {
-        MouseMovement(arg0.getX(), arg0.getY());
-        MouseX = arg0.getX();
-        MouseY = arg0.getY();
+    public void mouseDragged(MouseEvent m) {
+        MouseMovement(m.getX(), m.getY());
+        MouseX = m.getX();
+        MouseY = m.getY();
         CenterMouse();
     }
     
-    public void mouseMoved(MouseEvent arg0) {
-        MouseMovement(arg0.getX(), arg0.getY());
-        MouseX = arg0.getX();
-        MouseY = arg0.getY();
+    public void mouseMoved(MouseEvent m) {
+        MouseMovement(m.getX(), m.getY());
+        MouseX = m.getX();
+        MouseY = m.getY();
         CenterMouse();
     }
     
-    public void mouseClicked(MouseEvent arg0) {
+    public void mouseClicked(MouseEvent m) {
     }
 
-    public void mouseEntered(MouseEvent arg0) {
+    public void mouseEntered(MouseEvent m) {
     }
 
-    public void mouseExited(MouseEvent arg0) {
+    public void mouseExited(MouseEvent m) {
     }
 
-    public void mousePressed(MouseEvent arg0) {
-        if(arg0.getButton() == MouseEvent.BUTTON1)
-            if(PolygonOver != null)
-                PolygonOver.seeThrough = false;
-
-        if(arg0.getButton() == MouseEvent.BUTTON3)
-            if(PolygonOver != null)
-                PolygonOver.seeThrough = true;
-    }
-
-    public void mouseReleased(MouseEvent arg0) {
-    }
-
-    public void mouseWheelMoved(MouseWheelEvent arg0) {
-        if(arg0.getUnitsToScroll()>0)
-        {
-            if(zoom > MinZoom)
-                zoom -= 25 * arg0.getUnitsToScroll();
+    public void mousePressed(MouseEvent m) {
+        if(m.getButton() == MouseEvent.BUTTON1) {
+            if(selectedCube != -1) {
+                Cubes.get(selectedCube).removeCube();
+            }
         }
-        else
-        {
-            if(zoom < MaxZoom)
-                zoom -= 25 * arg0.getUnitsToScroll();
-        }    
+        
+        if(m.getButton() == MouseEvent.BUTTON3) {
+            if(selectedCube != -1) {
+                double[] coords = Cubes.get(selectedCube).getAdjacentCube(selectedFace);
+                Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,gray));
+            }
+        }
+    }
+
+    public void mouseReleased(MouseEvent m) {
+    }
+
+    public void mouseWheelMoved(MouseWheelEvent m) {
+        zoom -= 25 * m.getUnitsToScroll();
+        zoom = Calculator.clamp(zoom,MinZoom,MaxZoom);
     }
 }
