@@ -43,9 +43,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     double drawFPS = 0, MaxFPS = 120, SleepTime = 1000.0/MaxFPS, LastRefresh = 0, StartTime = System.currentTimeMillis(), LastFPSCheck = 0, Checks = 0;
     //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
-    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4;
+    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.05, heightTol = 4, sideTol = 2;
+    double movementFactor = 0.05, heightTol = 4, sideTol = 2, gravity = 0.4;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -222,15 +222,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             yMove -= (movementFactor * SideViewVector.y);
         }
         
-        if(Keys[4])
-        {
-            zMove += movementFactor;
-        }
-        
-        if(Keys[5])
-        {
-            zMove -= movementFactor;
-        }
+        zMove += zVel;
+        zVel -= (0.5 * gravity);
 
         for(int i = 0; i < Cubes.size(); i ++) {
             double[] attrs = Cubes.get(i).getAttributes();
@@ -243,24 +236,26 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             double xDiff = Math.abs(x - px);
             double yDiff = Math.abs(y - py);
             double zDiff = Math.abs(z - pz);
-            if(zDiff < heightTol && xDiff < sideTol && yDiff < sideTol) {
-                System.out.println(px - x);
-                System.out.println(py - y);
-                if(yDiff > xDiff && py > y + (sideTol - movementFactor)) {
+            if(zDiff <= heightTol && xDiff <= sideTol && yDiff <= sideTol) {
+                if(zDiff < heightTol && yDiff > xDiff && py >= y + (sideTol - movementFactor)) {
                     ViewFrom[1] = y + sideTol;
-                } else if(yDiff > xDiff && py < y - (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && yDiff > xDiff && py <= y - (sideTol - movementFactor)) {
                     ViewFrom[1] = y - sideTol;
-                } else if(xDiff > yDiff && px > x + (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && xDiff > yDiff && px >= x + (sideTol - movementFactor)) {
                     ViewFrom[0] = x + sideTol;
-                } else if(xDiff > yDiff && px < x - (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && xDiff > yDiff && px <= x - (sideTol - movementFactor)) {
                     ViewFrom[0] = x - sideTol;
-                } else if(zDiff < heightTol && pz > z) {
+                } else if(zDiff <= heightTol && pz > z) {
                     ViewFrom[2] = z + heightTol;
-                } else if(zDiff < heightTol && pz < z) {
+                    zVel = 0;
+                } else if(zDiff <= heightTol && pz < z) {
                     ViewFrom[2] = z - heightTol;
                 }
             }
         }
+        
+        System.out.println("xMove = " + xMove);
+        System.out.println("yMove = " + yMove);
         Vector MoveVector = new Vector(xMove, yMove, zMove);
         MoveTo(ViewFrom[0] + MoveVector.x * movementFactor, ViewFrom[1] + MoveVector.y * movementFactor, ViewFrom[2] + MoveVector.z * movementFactor);
     }
@@ -329,10 +324,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             Keys[2] = true;
         if(e.getKeyCode() == KeyEvent.VK_D)
             Keys[3] = true;
-        if(e.getKeyCode() == KeyEvent.VK_SPACE)
-            Keys[4] = true;
-        if(e.getKeyCode() == KeyEvent.VK_SHIFT)
-            Keys[5] = true;
+        if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+            zVel = 4;
+            ViewFrom[2] += 0.01;
+        }
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
