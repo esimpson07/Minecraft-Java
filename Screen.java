@@ -32,7 +32,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //Used for keeping mouse in center
     Robot r;
 
-    static double[] ViewFrom = new double[] { 15, 5, 10},    
+    static double[] ViewFrom = new double[] { 0, 0, 4},    
                     ViewTo = new double[] {0, 0, 0},
                     LightDir = new double[] {1, 1, 1};
 
@@ -45,7 +45,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4;
 
-    double movementFactor = 0.05;
+    double movementFactor = 0.05, heightTol = 4, sideTol = 2;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -68,7 +68,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         invisibleMouse();
         
-        Cubes.add(new Cube(18, -5, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(0, 0, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(2, 2, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(2, 0, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(0, 2, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(4, 4, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(4, 2, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(4, 0, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(2, 4, 0, 2, 2, 2, gray));
+        Cubes.add(new Cube(0, 4, 0, 2, 2, 2, gray));
     }    
     
     public void paintComponent(Graphics g)
@@ -190,17 +198,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
         
-        double[] attrs = Cubes.get(0).getAttributes();
-        double x = attrs[0] + (attrs[3] / 2);
-        double y = attrs[1] + (attrs[4] / 2);
-        double z = attrs[2] + (attrs[5] / 2);
-        double px = ViewFrom[0];
-        double py = ViewFrom[1];
-        double pz = ViewFrom[2];
-        double xDiff = Math.abs(x - px);
-        double yDiff = Math.abs(y - py);
-        double zDiff = Math.abs(z - pz);
-        
         if(Keys[0])
         {
             xMove += (movementFactor * ViewVector.x);
@@ -235,21 +232,33 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             zMove -= movementFactor;
         }
 
-        if(zDiff <= 2 && xDiff <= 1 && yDiff <= 1) {
-            System.out.println(px - x);
-            System.out.println(py - y);
-            if(yDiff > xDiff && py > y + (1 - movementFactor)) {
-                ViewFrom[1] = y + 1;
-            } else if(yDiff > xDiff && py < y - (1 - movementFactor)) {
-                ViewFrom[1] = y - 1;
-            } else if(xDiff > yDiff && px > x + (1 - movementFactor)) {
-                ViewFrom[0] = x + 1;
-            } else if(xDiff > yDiff && px < x - (1 - movementFactor)) {
-                ViewFrom[0] = x - 1;
-            } else if(zDiff < 2 && pz > z + (1 - movementFactor)) {
-                ViewFrom[2] = z + 2;
-            } else if(zDiff < 2 && pz < z - (1 - movementFactor)) {
-                ViewFrom[2] = z - 2;
+        for(int i = 0; i < Cubes.size(); i ++) {
+            double[] attrs = Cubes.get(i).getAttributes();
+            double x = attrs[0] + (attrs[3] / 2);
+            double y = attrs[1] + (attrs[4] / 2);
+            double z = attrs[2] + (attrs[5] / 2);
+            double px = ViewFrom[0];
+            double py = ViewFrom[1];
+            double pz = ViewFrom[2];
+            double xDiff = Math.abs(x - px);
+            double yDiff = Math.abs(y - py);
+            double zDiff = Math.abs(z - pz);
+            if(zDiff < heightTol && xDiff < sideTol && yDiff < sideTol) {
+                System.out.println(px - x);
+                System.out.println(py - y);
+                if(yDiff > xDiff && py > y + (sideTol - movementFactor)) {
+                    ViewFrom[1] = y + sideTol;
+                } else if(yDiff > xDiff && py < y - (sideTol - movementFactor)) {
+                    ViewFrom[1] = y - sideTol;
+                } else if(xDiff > yDiff && px > x + (sideTol - movementFactor)) {
+                    ViewFrom[0] = x + sideTol;
+                } else if(xDiff > yDiff && px < x - (sideTol - movementFactor)) {
+                    ViewFrom[0] = x - sideTol;
+                } else if(zDiff < heightTol && pz > z) {
+                    ViewFrom[2] = z + heightTol;
+                } else if(zDiff < heightTol && pz < z) {
+                    ViewFrom[2] = z - heightTol;
+                }
             }
         }
         Vector MoveVector = new Vector(xMove, yMove, zMove);
