@@ -15,7 +15,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Arrays;
 
 import javax.swing.JPanel;
 
@@ -48,7 +47,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.08, heightTol = 4, sideTol = 1.7, gravity = 0.027, jumpVel = 0.15;
+    double movementFactor = 0.2, heightTol = 2, sideTol = 1.7, gravity = 0.013, jumpVel = 0.25;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -71,25 +70,20 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
         
+        double period = ((random.nextFloat() + 0.5) * 0.5);
+        double amp = 2 * random.nextFloat();
         invisibleMouse();
-        int[][] map = generateTerrain(20);
-        for(int i = 0; i < 20; i ++) {
+        for(int i =  0; i < 20; i ++) {
             for(int j = 0; j < 20; j ++) {
-                for(int h = 0; h < map[i][j]; h ++) {
-                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 2 * h, 2, 2, 2, gray));
-                }
+                Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 0, 2, 2, 2, brown));
             }
         }
     }    
     
-    int[][] generateTerrain(int sideLength) { //generates a heightmap for the specified size of terrain
-        int[][] retVal = new int[sideLength][sideLength];
-        retVal[0][0] = (int)(random.nextFloat() * 4);
-        for(int r = 0; r < sideLength; r ++) {
-            for(int c = 0; c < sideLength; c ++) { 
-                retVal[r][c] = 2;
-            }
-        }
+    double[][] generateHeightMap(int size) {
+        double[][] retVal = new double[size][size];
+        double[] peak = new double[]{random.nextFloat() * size,random.nextFloat() * size};
+        
         return(retVal);
     }
     
@@ -107,9 +101,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         ControlSunAndLight();
 
         //Updates each polygon for this camera position
-        for(int i = 0; i < DPolygons.size(); i++) {
+        for(int i = 0; i < DPolygons.size(); i++)
             DPolygons.get(i).updatePolygon();
-        }
 
         //Set drawing order so closest polygons gets drawn last
         setOrder();
@@ -120,16 +113,16 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         setPolygonOver();
             
         //draw polygons in the Order that is set by the 'setOrder' function
-        for(int i = 0; i < NewOrder.length; i++) {
+        for(int i = 0; i < NewOrder.length; i++)
             DPolygons.get(NewOrder[i]).DrawablePolygon.drawPolygon(g);
-        }
             
         //draw the cross in the center of the screen
         drawMouseAim(g);            
         
         //FPS display
         g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
-        g.drawString("XYZ: " + roundTo(ViewFrom[0],3) + " " + roundTo(ViewFrom[1],3) + " " + roundTo(ViewFrom[2],3), 160, 40);
+        
+        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
         
         SleepAndRefresh();
     }
@@ -214,46 +207,43 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         LightDir[2] = -200;
     }
     
-    double roundTo(double value, int places) {
-        double scale = Math.pow(10, places);
-        return Math.round(value * scale) / scale;
-    }
-    
     void CameraMovement()
     {
         Vector ViewVector = new Vector(ViewTo[0] - ViewFrom[0], ViewTo[1] - ViewFrom[1], ViewTo[2] - ViewFrom[2]);
         double xMove = 0, yMove = 0, zMove = 0;
-        double adjMoveFactor = roundTo(60 * movementFactor / drawFPS,4);
+        double adjMovementFactor = (60.0 * movementFactor) / Calculator.clamp(drawFPS,1,MaxFPS);
+        
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
         
         ViewFrom[2] += zVel;
-        zVel -= gravity * adjMoveFactor;
+        zVel -= (gravity * adjMovementFactor / movementFactor);
+        zVel = Calculator.clamp(zVel,-15,jumpVel);
         
         if(Keys[0])
         {
-            xMove += (adjMoveFactor * ViewVector.x);
-            yMove += (adjMoveFactor * ViewVector.y);
+            xMove += (adjMovementFactor * ViewVector.x);
+            yMove += (adjMovementFactor * ViewVector.y);
         }
 
         if(Keys[2])
         {
-            xMove -= (adjMoveFactor * ViewVector.x);
-            yMove -= (adjMoveFactor * ViewVector.y);
+            xMove -= (adjMovementFactor * ViewVector.x);
+            yMove -= (adjMovementFactor * ViewVector.y);
         }
             
         if(Keys[1])
         {
-            xMove += (adjMoveFactor * SideViewVector.x);
-            yMove += (adjMoveFactor * SideViewVector.y);
+            xMove += (adjMovementFactor * SideViewVector.x);
+            yMove += (adjMovementFactor * SideViewVector.y);
         }
 
         if(Keys[3])
         {
-            xMove -= (adjMoveFactor * SideViewVector.x);
-            yMove -= (adjMoveFactor * SideViewVector.y);
+            xMove -= (adjMovementFactor * SideViewVector.x);
+            yMove -= (adjMovementFactor * SideViewVector.y);
         }
-        
+
         for(int i = 0; i < Cubes.size(); i ++) {
             double[] attrs = Cubes.get(i).getAttributes();
             double x = attrs[0] + (attrs[3] / 2);
@@ -264,27 +254,28 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             double pz = ViewFrom[2];
             double xDiff = Math.abs(x - px);
             double yDiff = Math.abs(y - py);
-            double zDiff = Math.abs(z - pz);
-            if(zDiff <= heightTol && xDiff <= sideTol && yDiff <= sideTol) {
-                if(zDiff < heightTol && yDiff > xDiff && py >= y + (sideTol - adjMoveFactor)) {
+            double zDiff = Math.abs(z + 1 - pz);
+            if(zDiff <= heightTol + 1 && xDiff <= sideTol && yDiff <= sideTol) {
+                if(zDiff < heightTol + 1 && yDiff > xDiff && py >= y + (sideTol - adjMovementFactor)) {
                     ViewFrom[1] = y + sideTol;
-                } else if(zDiff < heightTol && yDiff > xDiff && py <= y - (sideTol - adjMoveFactor)) {
+                } else if(zDiff < heightTol + 1 && yDiff > xDiff && py <= y - (sideTol - adjMovementFactor)) {
                     ViewFrom[1] = y - sideTol;
-                } else if(zDiff < heightTol && xDiff > yDiff && px >= x + (sideTol - adjMoveFactor)) {
+                } else if(zDiff < heightTol + 1 && xDiff > yDiff && px >= x + (sideTol - adjMovementFactor)) {
                     ViewFrom[0] = x + sideTol;
-                } else if(zDiff < heightTol && xDiff > yDiff && px <= x - (sideTol - adjMoveFactor)) {
+                } else if(zDiff < heightTol + 1 && xDiff > yDiff && px <= x - (sideTol - adjMovementFactor)) {
                     ViewFrom[0] = x - sideTol;
-                } else if(zDiff <= heightTol && pz > z + (1 - adjMoveFactor)) {
-                    ViewFrom[2] = z + heightTol;
+                } else if(zDiff <= heightTol + 1 && pz > z) {
+                    ViewFrom[2] = z + heightTol + 2;
                     canJump = true;
                     zVel = 0;
-                } else if(zDiff <= heightTol && pz < z - (1 - adjMoveFactor)) {
-                    ViewFrom[2] = z - heightTol;
+                } else if(zDiff <= heightTol + 1 && pz < z) {
+                    ViewFrom[2] = z - heightTol - 2;
                 }
             }
         }
+        
         Vector MoveVector = new Vector(xMove, yMove, zMove);
-        MoveTo(ViewFrom[0] + MoveVector.x * adjMoveFactor, ViewFrom[1] + MoveVector.y * adjMoveFactor, ViewFrom[2] + MoveVector.z * adjMoveFactor);
+        MoveTo(ViewFrom[0] + MoveVector.x * adjMovementFactor, ViewFrom[1] + MoveVector.y * adjMovementFactor, ViewFrom[2] + MoveVector.z * adjMovementFactor);
     }
 
     void MoveTo(double x, double y, double z)
@@ -313,15 +304,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
 
     void MouseMovement(double NewMouseX, double NewMouseY)
     {        
-            double difX = (NewMouseX - DDDTutorial.ScreenSize.getWidth()/2);
-            double difY = (NewMouseY - DDDTutorial.ScreenSize.getHeight()/2);
-            difY *= 6 - Math.abs(VertLook) * 5;
-            VertLook -= difY  / VertRotSpeed;
-            HorLook += difX / HorRotSpeed;
-            
-            VertLook = Calculator.clamp(VertLook,-0.99999,0.99999);
-            
-            updateView();
+        double difX = (NewMouseX - DDDTutorial.ScreenSize.getWidth()/2);
+        double difY = (NewMouseY - DDDTutorial.ScreenSize.getHeight()/2);
+        difY *= 6 - Math.abs(VertLook) * 5;
+        VertLook -= difY  / VertRotSpeed;
+        HorLook += difX / HorRotSpeed;
+        
+        VertLook = Calculator.clamp(VertLook,-0.99999,0.99999);
+        
+        updateView();
     }
     
     void updateView()
@@ -334,12 +325,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     void CenterMouse() 
     {
-            try {
-                r = new Robot();
-                r.mouseMove((int)DDDTutorial.ScreenSize.getWidth()/2, (int)DDDTutorial.ScreenSize.getHeight()/2);
-            } catch (AWTException e) {
-                e.printStackTrace();
-            }
+        try {
+            r = new Robot();
+            r.mouseMove((int)DDDTutorial.ScreenSize.getWidth()/2, (int)DDDTutorial.ScreenSize.getHeight()/2);
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
     }
     
     public void keyPressed(KeyEvent e) {
