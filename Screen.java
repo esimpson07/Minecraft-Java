@@ -40,21 +40,23 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static double zoom = 1000, MinZoom = 500, MaxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
     
     //FPS is a bit primitive, you can set the MaxFPS as high as u want
-    double drawFPS = 0, MaxFPS = 120, SleepTime = 1000.0/MaxFPS, LastRefresh = 0, StartTime = System.currentTimeMillis(), LastFPSCheck = 0, Checks = 0;
+    double drawFPS = 0, MaxFPS = 60, SleepTime = 1000.0/MaxFPS, LastRefresh = 0, StartTime = System.currentTimeMillis(), LastFPSCheck = 0, Checks = 0;
     //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.05, heightTol = 4, sideTol = 2, gravity = 0.4;
+    double movementFactor = 0.2, heightTol = 4, sideTol = 2, gravity = 0.013, jumpVel = 0.25;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
     static boolean OutLines = true;
+    private boolean canJump = true;
     boolean[] Keys = new boolean[6];
     
     long repaintTime = 0;
     
     Color gray = new Color(50,50,50);
+    Color brown = new Color(90,55,30);
     Color bgColor = new Color(153,204,255);
     
     public Screen()
@@ -67,16 +69,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         this.addMouseWheelListener(this);
         
         invisibleMouse();
-        
-        Cubes.add(new Cube(0, 0, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(2, 2, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(2, 0, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(0, 2, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(4, 4, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(4, 2, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(4, 0, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(2, 4, 0, 2, 2, 2, gray));
-        Cubes.add(new Cube(0, 4, 0, 2, 2, 2, gray));
+        for(int i =  0; i < 30; i ++) {
+            for(int j = 0; j < 30; j ++) {
+                Cubes.add(new Cube(2 * i - 30, 2 * j - 30, 0, 2, 2, 2, brown));
+            }
+        }
     }    
     
     public void paintComponent(Graphics g)
@@ -198,6 +195,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
         
+        ViewFrom[2] += zVel;
+        zVel -= gravity;
+        
         if(Keys[0])
         {
             xMove += (movementFactor * ViewVector.x);
@@ -221,9 +221,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             xMove -= (movementFactor * SideViewVector.x);
             yMove -= (movementFactor * SideViewVector.y);
         }
-        
-        zMove += zVel;
-        zVel -= (0.5 * gravity);
 
         for(int i = 0; i < Cubes.size(); i ++) {
             double[] attrs = Cubes.get(i).getAttributes();
@@ -247,6 +244,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     ViewFrom[0] = x - sideTol;
                 } else if(zDiff <= heightTol && pz > z) {
                     ViewFrom[2] = z + heightTol;
+                    canJump = true;
                     zVel = 0;
                 } else if(zDiff <= heightTol && pz < z) {
                     ViewFrom[2] = z - heightTol;
@@ -254,8 +252,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             }
         }
         
-        System.out.println("xMove = " + xMove);
-        System.out.println("yMove = " + yMove);
         Vector MoveVector = new Vector(xMove, yMove, zMove);
         MoveTo(ViewFrom[0] + MoveVector.x * movementFactor, ViewFrom[1] + MoveVector.y * movementFactor, ViewFrom[2] + MoveVector.z * movementFactor);
     }
@@ -292,7 +288,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             VertLook -= difY  / VertRotSpeed;
             HorLook += difX / HorRotSpeed;
             
-            VertLook = Calculator.clamp(VertLook,-0.999,0.999);
+            VertLook = Calculator.clamp(VertLook,-0.99999,0.99999);
             
             updateView();
     }
@@ -325,8 +321,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_D)
             Keys[3] = true;
         if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-            zVel = 4;
-            ViewFrom[2] += 0.01;
+            if(canJump) {
+                zVel = jumpVel;
+                ViewFrom[2] += 0.01;
+                canJump = false;
+            }
         }
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
