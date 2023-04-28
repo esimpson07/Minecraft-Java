@@ -15,6 +15,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Arrays;
 
 import javax.swing.JPanel;
 
@@ -47,7 +48,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.2, heightTol = 4, sideTol = 2, gravity = 0.013, jumpVel = 0.25;
+    double movementFactor = 0.08, heightTol = 4, sideTol = 1.7, gravity = 0.027, jumpVel = 0.15;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -70,18 +71,27 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
         
-        double period = ((random.nextFloat() + 0.5) * 0.5);
-        double amp = 2 * random.nextFloat();
         invisibleMouse();
-        for(int i =  0; i < 20; i ++) {
+        int[][] map = generateTerrain(20);
+        for(int i = 0; i < 20; i ++) {
             for(int j = 0; j < 20; j ++) {
-                Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 0, 2, 2, 2, gray));
-                for(int h = 1; h < (int)(amp * Math.sin(period * j) + 2 * amp); h ++) {
-                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, h, 2, 2, 2, brown));
+                for(int h = 0; h < map[i][j]; h ++) {
+                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 2 * h, 2, 2, 2, gray));
                 }
             }
         }
     }    
+    
+    int[][] generateTerrain(int sideLength) { //generates a heightmap for the specified size of terrain
+        int[][] retVal = new int[sideLength][sideLength];
+        retVal[0][0] = (int)(random.nextFloat() * 4);
+        for(int r = 0; r < sideLength; r ++) {
+            for(int c = 0; c < sideLength; c ++) { 
+                retVal[r][c] = 2;
+            }
+        }
+        return(retVal);
+    }
     
     public void paintComponent(Graphics g)
     {
@@ -97,8 +107,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         ControlSunAndLight();
 
         //Updates each polygon for this camera position
-        for(int i = 0; i < DPolygons.size(); i++)
+        for(int i = 0; i < DPolygons.size(); i++) {
             DPolygons.get(i).updatePolygon();
+        }
 
         //Set drawing order so closest polygons gets drawn last
         setOrder();
@@ -109,14 +120,16 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         setPolygonOver();
             
         //draw polygons in the Order that is set by the 'setOrder' function
-        for(int i = 0; i < NewOrder.length; i++)
+        for(int i = 0; i < NewOrder.length; i++) {
             DPolygons.get(NewOrder[i]).DrawablePolygon.drawPolygon(g);
+        }
             
         //draw the cross in the center of the screen
         drawMouseAim(g);            
         
         //FPS display
         g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
+        g.drawString("XYZ: " + roundTo(ViewFrom[0],3) + " " + roundTo(ViewFrom[1],3) + " " + roundTo(ViewFrom[2],3), 160, 40);
         
         SleepAndRefresh();
     }
@@ -201,40 +214,46 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         LightDir[2] = -200;
     }
     
+    double roundTo(double value, int places) {
+        double scale = Math.pow(10, places);
+        return Math.round(value * scale) / scale;
+    }
+    
     void CameraMovement()
     {
         Vector ViewVector = new Vector(ViewTo[0] - ViewFrom[0], ViewTo[1] - ViewFrom[1], ViewTo[2] - ViewFrom[2]);
         double xMove = 0, yMove = 0, zMove = 0;
+        double adjMoveFactor = roundTo(60 * movementFactor / drawFPS,4);
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
         
         ViewFrom[2] += zVel;
-        zVel -= gravity;
+        zVel -= gravity * adjMoveFactor;
         
         if(Keys[0])
         {
-            xMove += (movementFactor * ViewVector.x);
-            yMove += (movementFactor * ViewVector.y);
+            xMove += (adjMoveFactor * ViewVector.x);
+            yMove += (adjMoveFactor * ViewVector.y);
         }
 
         if(Keys[2])
         {
-            xMove -= (movementFactor * ViewVector.x);
-            yMove -= (movementFactor * ViewVector.y);
+            xMove -= (adjMoveFactor * ViewVector.x);
+            yMove -= (adjMoveFactor * ViewVector.y);
         }
             
         if(Keys[1])
         {
-            xMove += (movementFactor * SideViewVector.x);
-            yMove += (movementFactor * SideViewVector.y);
+            xMove += (adjMoveFactor * SideViewVector.x);
+            yMove += (adjMoveFactor * SideViewVector.y);
         }
 
         if(Keys[3])
         {
-            xMove -= (movementFactor * SideViewVector.x);
-            yMove -= (movementFactor * SideViewVector.y);
+            xMove -= (adjMoveFactor * SideViewVector.x);
+            yMove -= (adjMoveFactor * SideViewVector.y);
         }
-
+        
         for(int i = 0; i < Cubes.size(); i ++) {
             double[] attrs = Cubes.get(i).getAttributes();
             double x = attrs[0] + (attrs[3] / 2);
@@ -247,26 +266,25 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             double yDiff = Math.abs(y - py);
             double zDiff = Math.abs(z - pz);
             if(zDiff <= heightTol && xDiff <= sideTol && yDiff <= sideTol) {
-                if(zDiff < heightTol && yDiff > xDiff && py >= y + (sideTol - movementFactor)) {
+                if(zDiff < heightTol && yDiff > xDiff && py >= y + (sideTol - adjMoveFactor)) {
                     ViewFrom[1] = y + sideTol;
-                } else if(zDiff < heightTol && yDiff > xDiff && py <= y - (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && yDiff > xDiff && py <= y - (sideTol - adjMoveFactor)) {
                     ViewFrom[1] = y - sideTol;
-                } else if(zDiff < heightTol && xDiff > yDiff && px >= x + (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && xDiff > yDiff && px >= x + (sideTol - adjMoveFactor)) {
                     ViewFrom[0] = x + sideTol;
-                } else if(zDiff < heightTol && xDiff > yDiff && px <= x - (sideTol - movementFactor)) {
+                } else if(zDiff < heightTol && xDiff > yDiff && px <= x - (sideTol - adjMoveFactor)) {
                     ViewFrom[0] = x - sideTol;
-                } else if(zDiff <= heightTol && pz > z) {
+                } else if(zDiff <= heightTol && pz > z + (1 - adjMoveFactor)) {
                     ViewFrom[2] = z + heightTol;
                     canJump = true;
                     zVel = 0;
-                } else if(zDiff <= heightTol && pz < z) {
+                } else if(zDiff <= heightTol && pz < z - (1 - adjMoveFactor)) {
                     ViewFrom[2] = z - heightTol;
                 }
             }
         }
-        
         Vector MoveVector = new Vector(xMove, yMove, zMove);
-        MoveTo(ViewFrom[0] + MoveVector.x * movementFactor, ViewFrom[1] + MoveVector.y * movementFactor, ViewFrom[2] + MoveVector.z * movementFactor);
+        MoveTo(ViewFrom[0] + MoveVector.x * adjMoveFactor, ViewFrom[1] + MoveVector.y * adjMoveFactor, ViewFrom[2] + MoveVector.z * adjMoveFactor);
     }
 
     void MoveTo(double x, double y, double z)
@@ -334,11 +352,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_D)
             Keys[3] = true;
         if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+            Keys[4] = true;
             if(canJump) {
                 zVel = jumpVel;
                 ViewFrom[2] += 0.01;
                 canJump = false;
             }
+        }
+        if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
+            Keys[5] = true;
         }
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
