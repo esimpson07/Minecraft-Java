@@ -14,6 +14,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.JPanel;
 
@@ -24,6 +25,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     static ArrayList<Cube> Cubes = new ArrayList<Cube>();
     
+    Random random = new Random();
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
     private int selectedCube = -1;
@@ -68,10 +70,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
         
+        double period = ((random.nextFloat() + 0.5) * 0.5);
+        double amp = 2 * random.nextFloat();
         invisibleMouse();
-        for(int i =  0; i < 30; i ++) {
-            for(int j = 0; j < 30; j ++) {
-                Cubes.add(new Cube(2 * i - 30, 2 * j - 30, 0, 2, 2, 2, brown));
+        for(int i =  0; i < 20; i ++) {
+            for(int j = 0; j < 20; j ++) {
+                Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 0, 2, 2, 2, gray));
+                for(int h = 1; h < (int)(amp * Math.sin(period * j) + 2 * amp); h ++) {
+                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, h, 2, 2, 2, brown));
+                }
             }
         }
     }    
@@ -95,6 +102,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
 
         //Set drawing order so closest polygons gets drawn last
         setOrder();
+        
+        deletePolys();
             
         //Set the polygon that the mouse is currently over
         setPolygonOver();
@@ -110,6 +119,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
         
         SleepAndRefresh();
+    }
+    
+    void deletePolys() {
+        
     }
     
     void setOrder()
