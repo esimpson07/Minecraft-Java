@@ -47,7 +47,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.2, heightTol = 2, sideTol = 1.7, gravity = 0.013, jumpVel = 0.25;
+    double movementFactor = 0.2, heightTol = 2, sideTol = 1.85, gravity = 0.013, jumpVel = 0.25, reachDist = 12;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     int[] NewOrder;
 
@@ -57,9 +57,24 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     long repaintTime = 0;
     
-    Color gray = new Color(50,50,50);
-    Color brown = new Color(90,55,30);
+    int color = 9;
+    
     Color bgColor = new Color(153,204,255);
+    
+    Color red = new Color(180,0,0);
+    Color green = new Color(0,180,0);
+    Color blue = new Color(0,0,180);
+    
+    Color orange = new Color(180,120,0);
+    Color yellow = new Color(180,180,0);
+    Color cyan = new Color(0,180,180);
+    Color magenta = new Color(180,0,180);
+    
+    Color black = new Color(20,20,20);
+    Color gray = new Color(75,75,75);
+    Color brown = new Color(133,73,45);
+    
+    Color[] colors = new Color[]{brown,red,green,blue,orange,yellow,cyan,magenta,black,gray};
     
     public Screen()
     {
@@ -73,18 +88,48 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         double period = ((random.nextFloat() + 0.5) * 0.5);
         double amp = 2 * random.nextFloat();
         invisibleMouse();
-        for(int i =  0; i < 20; i ++) {
-            for(int j = 0; j < 20; j ++) {
-                Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 0, 2, 2, 2, brown));
+        int size = 20;
+        int[][] map = generateHeightMap(size);
+        for(int i =  0; i < size; i ++) {
+            for(int j = 0; j < size; j ++) {
+                for(int h = 0; h < map[i][j]; h ++) {
+                    Cubes.add(new Cube(2 * i - size, 2 * j - size, 2 * h, 2, 2, 2, brown));
+                }
+                Cubes.add(new Cube(2 * i - size, 2 * j - size, 2 * map[i][j], 2, 2, 2, green));
             }
         }
     }    
     
-    double[][] generateHeightMap(int size) {
-        double[][] retVal = new double[size][size];
-        double[] peak = new double[]{random.nextFloat() * size,random.nextFloat() * size};
+    int[][] generateHeightMap(int size) {
+        int[][] retVal = new int[size][size];/*
+        double amp1 = 2 * random.nextFloat() + 1;
+        double period1 = 2 * random.nextFloat();
+        double amp2 = 2 * random.nextFloat() + 1;
+        double period2 = 2 * random.nextFloat();*/
+        for(int r = 0; r < size; r ++) {
+            for(int c = 0; c < size; c ++) {
+                retVal[r][c] = 2;//(int)Math.min(amp1 * Math.sin(period1 * r), amp2 * Math.sin(period2 * c)) + 2;
+            }
+        }
         
         return(retVal);
+    }
+    
+    boolean willCollide(double[] attrs) {
+        double x = attrs[0] + (attrs[3] / 2);
+        double y = attrs[1] + (attrs[4] / 2);
+        double z = attrs[2] + (attrs[5] / 2);
+        double px = ViewFrom[0];
+        double py = ViewFrom[1];
+        double pz = ViewFrom[2];
+        double xDiff = Math.abs(x - px);
+        double yDiff = Math.abs(y - py);
+        double zDiff = Math.abs(z + 1 - pz);
+        if(zDiff < heightTol + 1 && xDiff < sideTol && yDiff < sideTol) {
+            return(true);
+        } else {
+            return(false);
+        }
     }
     
     public void paintComponent(Graphics g)
@@ -101,8 +146,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         ControlSunAndLight();
 
         //Updates each polygon for this camera position
-        for(int i = 0; i < DPolygons.size(); i++)
+        for(int i = 0; i < DPolygons.size(); i++) {
             DPolygons.get(i).updatePolygon();
+        }
 
         //Set drawing order so closest polygons gets drawn last
         setOrder();
@@ -113,9 +159,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         setPolygonOver();
             
         //draw polygons in the Order that is set by the 'setOrder' function
-        for(int i = 0; i < NewOrder.length; i++)
-            DPolygons.get(NewOrder[i]).DrawablePolygon.drawPolygon(g);
-            
+        for(int i = 0; i < NewOrder.length; i++) {
+            DPolygons.get(NewOrder[i]).getDrawablePolygon().drawPolygon(g);
+        }
         //draw the cross in the center of the screen
         drawMouseAim(g);            
         
@@ -123,6 +169,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
         
         g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
+        
+        int scale = 30;
+        g.setColor(Color.WHITE);
+        g.fillRect(((int)DDDTutorial.ScreenSize.getWidth() / 2) - (colors.length / 2) * scale,(int)DDDTutorial.ScreenSize.getHeight() - 2 * scale - 12,colors.length * scale - 17,16);
+        for(int i = 0; i < colors.length; i ++) {
+            g.setColor(colors[i]);
+            g.drawString("|" + i + "|", ((int)DDDTutorial.ScreenSize.getWidth() / 2) - scale * ((colors.length / 2) - i), (int)DDDTutorial.ScreenSize.getHeight() - 2 * scale);
+        }
         
         SleepAndRefresh();
     }
@@ -138,7 +192,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         for(int i=0; i<DPolygons.size(); i++)
         {
-            k[i] = DPolygons.get(i).AvgDist;
+            k[i] = DPolygons.get(i).getAvgDist();
             NewOrder[i] = i;
         }
         
@@ -211,37 +265,37 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     {
         Vector ViewVector = new Vector(ViewTo[0] - ViewFrom[0], ViewTo[1] - ViewFrom[1], ViewTo[2] - ViewFrom[2]);
         double xMove = 0, yMove = 0, zMove = 0;
-        double adjMovementFactor = (60.0 * movementFactor) / Calculator.clamp(drawFPS,1,MaxFPS);
+        double adjMovementFactor = (60.0 * movementFactor) / Calculator.clamp(drawFPS,15,MaxFPS);
         
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
         
         ViewFrom[2] += zVel;
-        zVel -= (gravity * adjMovementFactor / movementFactor);
+        zVel -= gravity;
         zVel = Calculator.clamp(zVel,-15,jumpVel);
         
         if(Keys[0])
         {
-            xMove += (adjMovementFactor * ViewVector.x);
-            yMove += (adjMovementFactor * ViewVector.y);
+            xMove += (adjMovementFactor * ViewVector.getX());
+            yMove += (adjMovementFactor * ViewVector.getY());
         }
 
         if(Keys[2])
         {
-            xMove -= (adjMovementFactor * ViewVector.x);
-            yMove -= (adjMovementFactor * ViewVector.y);
+            xMove -= (adjMovementFactor * ViewVector.getX());
+            yMove -= (adjMovementFactor * ViewVector.getY());
         }
             
         if(Keys[1])
         {
-            xMove += (adjMovementFactor * SideViewVector.x);
-            yMove += (adjMovementFactor * SideViewVector.y);
+            xMove += (adjMovementFactor * SideViewVector.getX());
+            yMove += (adjMovementFactor * SideViewVector.getY());
         }
 
         if(Keys[3])
         {
-            xMove -= (adjMovementFactor * SideViewVector.x);
-            yMove -= (adjMovementFactor * SideViewVector.y);
+            xMove -= (adjMovementFactor * SideViewVector.getX());
+            yMove -= (adjMovementFactor * SideViewVector.getY());
         }
 
         for(int i = 0; i < Cubes.size(); i ++) {
@@ -264,18 +318,18 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     ViewFrom[0] = x + sideTol;
                 } else if(zDiff < heightTol + 1 && xDiff > yDiff && px <= x - (sideTol - adjMovementFactor)) {
                     ViewFrom[0] = x - sideTol;
-                } else if(zDiff <= heightTol + 1 && pz > z) {
+                } else if(zDiff <= heightTol + 1 && pz > z + (1 - adjMovementFactor)) {
                     ViewFrom[2] = z + heightTol + 2;
                     canJump = true;
                     zVel = 0;
-                } else if(zDiff <= heightTol + 1 && pz < z) {
-                    ViewFrom[2] = z - heightTol - 2;
+                } else if(zDiff <= heightTol + 1 && pz < z - (1 - adjMovementFactor)) {
+                    ViewFrom[2] = z - heightTol;
                 }
             }
         }
         
         Vector MoveVector = new Vector(xMove, yMove, zMove);
-        MoveTo(ViewFrom[0] + MoveVector.x * adjMovementFactor, ViewFrom[1] + MoveVector.y * adjMovementFactor, ViewFrom[2] + MoveVector.z * adjMovementFactor);
+        MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
     }
 
     void MoveTo(double x, double y, double z)
@@ -291,10 +345,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         PolygonOver = null;
         selectedCube = -1;
         for(int i = NewOrder.length-1; i >= 0; i --) {
-            if(DPolygons.get(NewOrder[i]).DrawablePolygon.MouseOver() && DPolygons.get(NewOrder[i]).draw 
-                    && DPolygons.get(NewOrder[i]).DrawablePolygon.visible)
+            if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
+                    && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && DPolygons.get(NewOrder[i]).GetDist() <= reachDist)
             {
-                PolygonOver = DPolygons.get(NewOrder[i]).DrawablePolygon;
+                PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
                 selectedCube = NewOrder[i] / 6;
                 selectedFace = NewOrder[i] % 6;
                 break;
@@ -353,6 +407,26 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
             Keys[5] = true;
         }
+        if(e.getKeyCode() == KeyEvent.VK_0)
+            color = 0;
+        if(e.getKeyCode() == KeyEvent.VK_1)
+            color = 1;
+        if(e.getKeyCode() == KeyEvent.VK_2)
+            color = 2;
+        if(e.getKeyCode() == KeyEvent.VK_3)
+            color = 3;
+        if(e.getKeyCode() == KeyEvent.VK_4)
+            color = 4;
+        if(e.getKeyCode() == KeyEvent.VK_5)
+            color = 5;
+        if(e.getKeyCode() == KeyEvent.VK_6)
+            color = 6;
+        if(e.getKeyCode() == KeyEvent.VK_7)
+            color = 7;
+        if(e.getKeyCode() == KeyEvent.VK_8)
+            color = 8;
+        if(e.getKeyCode() == KeyEvent.VK_9)
+            color = 9;
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
@@ -411,7 +485,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(m.getButton() == MouseEvent.BUTTON3) {
             if(selectedCube != -1) {
                 double[] coords = Cubes.get(selectedCube).getAdjacentCube(selectedFace);
-                Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,gray));
+                if(!willCollide(new double[]{coords[0],coords[1],coords[2],2,2,2})) {
+                    Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,colors[color]));
+                }
             }
         }
     }
