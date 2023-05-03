@@ -7,16 +7,19 @@ public class DPolygon {
     private double[] calcPos, newX, newY;
     private double[] x, y, z;
     private double avgDist;
+    private int side, id;
     
     private boolean draw = true, seeThrough = false;
     
-    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean seeThrough)
+    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean seeThrough, int side, int id)
     {
         this.x = x;
         this.y = y;
         this.z = z;        
         this.c = c;
-        this.seeThrough = seeThrough; 
+        this.id = id;
+        this.side = side;
+        this.seeThrough = seeThrough;
         createPolygon();
     }
     
@@ -45,6 +48,14 @@ public class DPolygon {
         DrawablePolygon.setDraw(draw);
         DrawablePolygon.updatePolygon(newX, newY);
         avgDist = GetDist();
+    }
+    
+    int getSide() {
+        return side;
+    }
+    
+    int getID() {
+        return id;
     }
     
     void calcLighting()
