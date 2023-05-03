@@ -89,30 +89,21 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         double amp = 2 * random.nextFloat();
         invisibleMouse();
         int size = 20;
-        int[][] map = generateHeightMap(size);
-        for(int i =  0; i < size; i ++) {
-            for(int j = 0; j < size; j ++) {
-                for(int h = 0; h < map[i][j]; h ++) {
-                    Cubes.add(new Cube(2 * i - size, 2 * j - size, 2 * h, 2, 2, 2, brown));
+        for(int i = 0; i < 20; i ++) {
+            for(int j = 0; j < 20; j ++) {
+                for(int h = 0; h < 20; h ++) {
+                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 2 * h, 2, 2, 2, gray,Cubes.size()));
                 }
-                Cubes.add(new Cube(2 * i - size, 2 * j - size, 2 * map[i][j], 2, 2, 2, green));
-            }
-        }
-    }    
-    
-    int[][] generateHeightMap(int size) {
-        int[][] retVal = new int[size][size];/*
-        double amp1 = 2 * random.nextFloat() + 1;
-        double period1 = 2 * random.nextFloat();
-        double amp2 = 2 * random.nextFloat() + 1;
-        double period2 = 2 * random.nextFloat();*/
-        for(int r = 0; r < size; r ++) {
-            for(int c = 0; c < size; c ++) {
-                retVal[r][c] = 2;//(int)Math.min(amp1 * Math.sin(period1 * r), amp2 * Math.sin(period2 * c)) + 2;
             }
         }
         
-        return(retVal);
+        for(int i = 0; i < Cubes.size(); i ++) {
+            Cubes.get(i).checkAdjacency();
+        }
+        
+        for(int i = 0; i < Cubes.size(); i ++) {
+            Cubes.get(i).updatePoly();
+        }
     }
     
     boolean willCollide(double[] attrs) {
@@ -346,11 +337,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         selectedCube = -1;
         for(int i = NewOrder.length-1; i >= 0; i --) {
             if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                    && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && DPolygons.get(NewOrder[i]).GetDist() <= reachDist)
+                    && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
             {
                 PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
-                selectedCube = NewOrder[i] / 6;
-                selectedFace = NewOrder[i] % 6;
+                selectedCube = DPolygons.get(NewOrder[i]).getID();
+                selectedFace = DPolygons.get(NewOrder[i]).getSide();
                 break;
             }
         }
@@ -478,16 +469,23 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     public void mousePressed(MouseEvent m) {
         if(m.getButton() == MouseEvent.BUTTON1) {
             if(selectedCube != -1) {
-                Cubes.get(selectedCube).removeCube();
+                for(int i = 0; i < Cubes.size(); i ++) {
+                    if(Cubes.get(i).getID() == selectedCube) {
+                        Cubes.get(i).removeCube();
+                    }
+                }
             }
         }
         
         if(m.getButton() == MouseEvent.BUTTON3) {
             if(selectedCube != -1) {
-                double[] coords = Cubes.get(selectedCube).getAdjacentCube(selectedFace);
-                if(!willCollide(new double[]{coords[0],coords[1],coords[2],2,2,2})) {
-                    Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,colors[color]));
+                for(int i = 0; i < Cubes.size(); i ++) {
+                    if(Cubes.get(i).getID() == selectedCube) {
+                        double[] coords = Cubes.get(i).getAdjacentCube(selectedFace);
+                        Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,colors[color],(int)(random.nextFloat() * 999999)));
+                    }
                 }
+                
             }
         }
     }
