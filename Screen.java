@@ -92,7 +92,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int i = 0; i < 20; i ++) {
             for(int j = 0; j < 20; j ++) {
                 for(int h = 0; h < 20; h ++) {
-                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 2 * h, 2, 2, 2, gray,Cubes.size()));
+                    Cubes.add(new Cube(2 * i - 20, 2 * j - 20, 2 * h, 2, 2, 2, colors[(int)(Math.random() * 10)],Cubes.size()));
                 }
             }
         }
@@ -293,36 +293,37 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
         
         for(int i = 0; i < Cubes.size(); i ++) {
-            double[] attrs = Cubes.get(i).getAttributes();
-            double x = attrs[0] + (attrs[3] / 2);
-            double y = attrs[1] + (attrs[4] / 2);
-            double z = attrs[2] + (attrs[5] / 2);
-            double px = ViewFrom[0];
-            double py = ViewFrom[1];
-            double pz = ViewFrom[2];
-            double xDiff = Math.abs(x - px);
-            double yDiff = Math.abs(y - py);
-            double zDiff = Math.abs(z + 1 - pz);
-            if(zDiff <= heightTol + 1 && xDiff <= sideTol && yDiff <= sideTol) {
-                if(zDiff < heightTol + 1 && yDiff > xDiff && py >= y + (sideTol - adjMovementFactor)) {
-                    ViewFrom[1] = y + sideTol;
-                } else if(zDiff < heightTol + 1 && yDiff > xDiff && py <= y - (sideTol - adjMovementFactor)) {
-                    ViewFrom[1] = y - sideTol;
-                } else if(zDiff < heightTol + 1 && xDiff > yDiff && px >= x + (sideTol - adjMovementFactor)) {
-                    ViewFrom[0] = x + sideTol;
-                } else if(zDiff < heightTol + 1 && xDiff > yDiff && px <= x - (sideTol - adjMovementFactor)) {
-                    ViewFrom[0] = x - sideTol;
-                } else if(zDiff <= heightTol + 1 && pz > z + (1 - adjMovementFactor)) {
-                    ViewFrom[2] = z + heightTol + 2;
-                    canJump = true;
-                    zVel = 0;
-                } else if(zDiff <= heightTol + 1 && pz < z - (1 - adjMovementFactor)) {
-                    ViewFrom[2] = z - heightTol;
+            if(Cubes.get(i).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 7) {
+                double[] attrs = Cubes.get(i).getAttributes();
+                double x = attrs[0] + (attrs[3] / 2);
+                double y = attrs[1] + (attrs[4] / 2);
+                double z = attrs[2] + (attrs[5] / 2);
+                double px = ViewFrom[0];
+                double py = ViewFrom[1];
+                double pz = ViewFrom[2];
+                double xDiff = Math.abs(x - px);
+                double yDiff = Math.abs(y - py);
+                double zDiff = Math.abs(z + 1 - pz);
+                if(zDiff <= heightTol + 1 && xDiff <= sideTol && yDiff <= sideTol) {
+                    if(zDiff < heightTol + 1 && yDiff > xDiff + 0.01 && py > y + (sideTol - adjMovementFactor)) {
+                        ViewFrom[1] = y + sideTol;
+                    } else if(zDiff < heightTol + 1 && yDiff > xDiff + 0.01 && py < y - (sideTol - adjMovementFactor)) {
+                        ViewFrom[1] = y - sideTol;
+                    } else if(zDiff < heightTol + 1 && xDiff > yDiff + 0.01 && px > x + (sideTol - adjMovementFactor)) {
+                        ViewFrom[0] = x + sideTol;
+                    } else if(zDiff < heightTol + 1 && xDiff > yDiff + 0.01 && px < x - (sideTol - adjMovementFactor)) {
+                        ViewFrom[0] = x - sideTol;
+                    } else if(zDiff <= heightTol + 1 && pz > z + (1 - adjMovementFactor)) {
+                        ViewFrom[2] = z + heightTol + 2;
+                        canJump = true;
+                        zVel = 0;
+                    } else if(zDiff <= heightTol + 1 && pz < z - (1 - adjMovementFactor)) {
+                        ViewFrom[2] = z - heightTol;
+                    }
                 }
             }
+            updateView();
         }
-        
-        updateView();
     }
 
     void MoveTo(double x, double y, double z)
