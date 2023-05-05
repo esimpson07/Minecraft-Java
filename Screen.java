@@ -288,7 +288,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             xMove -= (adjMovementFactor * SideViewVector.getX());
             yMove -= (adjMovementFactor * SideViewVector.getY());
         }
-
+        
+        Vector MoveVector = new Vector(xMove, yMove, zMove);
+        MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
+        
         for(int i = 0; i < Cubes.size(); i ++) {
             double[] attrs = Cubes.get(i).getAttributes();
             double x = attrs[0] + (attrs[3] / 2);
@@ -319,8 +322,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             }
         }
         
-        Vector MoveVector = new Vector(xMove, yMove, zMove);
-        MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
+        updateView();
     }
 
     void MoveTo(double x, double y, double z)
@@ -328,7 +330,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         ViewFrom[0] = x;
         ViewFrom[1] = y;
         ViewFrom[2] = z;
-        updateView();
     }
 
     void setPolygonOver()
@@ -482,10 +483,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 for(int i = 0; i < Cubes.size(); i ++) {
                     if(Cubes.get(i).getID() == selectedCube) {
                         double[] coords = Cubes.get(i).getAdjacentCube(selectedFace);
-                        Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,colors[color],(int)(random.nextFloat() * 999999)));
+                        if(!willCollide(new double[]{coords[0],coords[1],coords[2],2,2,2})) {
+                            Cubes.add(new Cube(coords[0],coords[1],coords[2],2,2,2,colors[color],(int)(random.nextFloat() * 999999)));
+                        }
+                        break;
                     }
                 }
-                
             }
         }
     }
