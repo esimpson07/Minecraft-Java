@@ -338,13 +338,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         PolygonOver = null;
         selectedCube = -1;
         for(int i = NewOrder.length-1; i >= 0; i --) {
-            if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                    && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
-            {
-                PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
-                selectedCube = DPolygons.get(NewOrder[i]).getID();
-                selectedFace = DPolygons.get(NewOrder[i]).getSide();
-                break;
+            if(DPolygons.get(NewOrder[i]).getDist() < 10) {
+                if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
+                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
+                {
+                    PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
+                    selectedCube = DPolygons.get(NewOrder[i]).getID();
+                    selectedFace = DPolygons.get(NewOrder[i]).getSide();
+                    break;
+                }
             }
         }
     }
