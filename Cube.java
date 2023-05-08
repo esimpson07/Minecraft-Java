@@ -68,12 +68,30 @@ public class Cube {
         return id;
     }
     
-    void checkAdjacency() {
+    double getDist(double x, double y, double z) {
+        return Math.sqrt(Math.pow(this.x - x,2) + Math.pow(this.y - y,2) + Math.pow(this.z - z,2));
+    }
+    
+    void softAdjacencyCheck() {
         for(int i = 0; i < Screen.Cubes.size(); i ++) {
             for(int j = 0; j < 6; j ++) {
                 if(Screen.Cubes.get(i).getCoords()[0] == getAdjacentCube(j)[0] && Screen.Cubes.get(i).getCoords()[1] == 
                     getAdjacentCube(j)[1] && Screen.Cubes.get(i).getCoords()[2] == getAdjacentCube(j)[2]) {
                     polysToDraw[j] = false;
+                    updatePoly();
+                }
+            }
+        }
+    }
+    
+    void hardAdjacencyCheck() {
+        for(int i = 0; i < Screen.Cubes.size(); i ++) {
+            for(int j = 0; j < 6; j ++) {
+                if(Screen.Cubes.get(i).getCoords()[0] == getAdjacentCube(j)[0] && Screen.Cubes.get(i).getCoords()[1] == 
+                    getAdjacentCube(j)[1] && Screen.Cubes.get(i).getCoords()[2] == getAdjacentCube(j)[2]) {
+                    polysToDraw[j] = false;
+                    updatePoly();
+                    Screen.Cubes.get(i).softAdjacencyCheck();
                 }
             }
         }
@@ -230,6 +248,28 @@ public class Cube {
         } else if(face == 5) {
             polysToDraw[4] = state;
         }
+    }
+    
+    int getAdjacentPoly(int face) {
+        if(face == 0) {
+            return 1;
+        } else if(face == 1) {
+            return 0;
+        } else if(face == 2) {
+            return 3;
+        } else if(face == 3) {
+            return 2;
+        } else if(face == 4) {
+            return 5;
+        } else if(face == 5) {
+            return 4;
+        } else {
+            return -1;
+        }
+    }
+    
+    boolean[] getPolysToDraw() {
+        return polysToDraw;
     }
     
     void changeAdjacentCubePoly(int face, boolean state) {
