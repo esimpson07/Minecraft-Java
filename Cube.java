@@ -1,31 +1,32 @@
 import java.awt.Color;
 
 public class Cube {
-    double x, y, z, width, length, height, rotation = Math.PI*0.75;
-    double[] RotAdd = new double[4];
-    Color c;
-    double x1, x2, x3, x4, y1, y2, y3, y4;
-    DPolygon[] Polys = new DPolygon[6];
-    boolean[] polysToDraw;
-    double[] angle;
-    int id;
+    private double x, y, z, width, length, height, rotation = Math.PI*0.75;
+    private double[] RotAdd = new double[4];
+    private double x1, x2, x3, x4, y1, y2, y3, y4;
+    private DPolygon[] Polys = new DPolygon[6];
+    private Color[] c;
+    private boolean[] polysToDraw;
+    private double[] angle;
+    private int id;
     
-    public Cube(double x, double y, double z, double width, double length, double height, Color c, int id)
+    public Cube(double x, double y, double z, double width, double length, double height, int type)
     {
-        Polys[0] = new DPolygon(new double[]{x, x+width, x+width, x}, new double[]{y, y, y+length, y+length},  new double[]{z, z, z, z}, c, false, 0, id);
+        this.id = (int)(Math.random() * 2147483647);
+        this.c = getColorsForCubeType(type);
+        Polys[0] = new DPolygon(new double[]{x, x+width, x+width, x}, new double[]{y, y, y+length, y+length},  new double[]{z, z, z, z}, c[0], false, 0, id);
         Screen.DPolygons.add(Polys[0]);
-        Polys[1] = new DPolygon(new double[]{x, x+width, x+width, x}, new double[]{y, y, y+length, y+length},  new double[]{z+height, z+height, z+height, z+height}, c, false, 1, id);
+        Polys[1] = new DPolygon(new double[]{x, x+width, x+width, x}, new double[]{y, y, y+length, y+length},  new double[]{z+height, z+height, z+height, z+height}, c[1], false, 1, id);
         Screen.DPolygons.add(Polys[1]);
-        Polys[2] = new DPolygon(new double[]{x, x, x+width, x+width}, new double[]{y, y, y, y},  new double[]{z, z+height, z+height, z}, c, false, 2, id);
+        Polys[2] = new DPolygon(new double[]{x, x, x+width, x+width}, new double[]{y, y, y, y},  new double[]{z, z+height, z+height, z}, c[2], false, 2, id);
         Screen.DPolygons.add(Polys[2]);
-        Polys[3] = new DPolygon(new double[]{x+width, x+width, x+width, x+width}, new double[]{y, y, y+length, y+length},  new double[]{z, z+height, z+height, z}, c, false, 3, id);
+        Polys[3] = new DPolygon(new double[]{x+width, x+width, x+width, x+width}, new double[]{y, y, y+length, y+length},  new double[]{z, z+height, z+height, z}, c[3], false, 3, id);
         Screen.DPolygons.add(Polys[3]);
-        Polys[4] = new DPolygon(new double[]{x, x, x+width, x+width}, new double[]{y+length, y+length, y+length, y+length},  new double[]{z, z+height, z+height, z}, c, false, 4, id);
+        Polys[4] = new DPolygon(new double[]{x, x, x+width, x+width}, new double[]{y+length, y+length, y+length, y+length},  new double[]{z, z+height, z+height, z}, c[4], false, 4, id);
         Screen.DPolygons.add(Polys[4]);
-        Polys[5] = new DPolygon(new double[]{x, x, x, x}, new double[]{y, y, y+length, y+length},  new double[]{z, z+height, z+height, z}, c, false, 5, id);
+        Polys[5] = new DPolygon(new double[]{x, x, x, x}, new double[]{y, y, y+length, y+length},  new double[]{z, z+height, z+height, z}, c[5], false, 5, id);
         Screen.DPolygons.add(Polys[5]);
         polysToDraw = new boolean[]{true,true,true,true,true,true};
-        this.c = c;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -36,6 +37,30 @@ public class Cube {
         
         setRotAdd();
         updatePoly();
+    }
+    
+    Color[] getColorsForCubeType(int type) {
+        if(type == Screen.stone) {
+            return(new Color[]{Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray});
+        } else if(type == Screen.cobblestone) {
+            return(new Color[]{Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray});
+        } else if(type == Screen.dirt) {
+            return(new Color[]{Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.grass) {
+            return(new Color[]{Screen.darkBrown,Screen.lightGreen,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.planks) {
+            return(new Color[]{Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown});
+        } else if(type == Screen.logs) {
+            return(new Color[]{Screen.lightBrown,Screen.lightBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.leaves) {
+            return(new Color[]{Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen});
+        } else if(type == Screen.sand) {
+            return(new Color[]{Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige});
+        } else if(type == Screen.gravel) {
+            return(new Color[]{Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray});
+        } else {
+            return(new Color[]{Screen.black,Screen.black,Screen.black,Screen.black,Screen.black,Screen.black});
+        }
     }
     
     double[] getAttributes() {
@@ -176,7 +201,7 @@ public class Cube {
             Polys[0].setY(new double[]{y1, y2, y3, y4});;
             Polys[0].setZ(new double[]{z, z, z, z});
         } else  if(polysToDraw[0] == true && Polys[0] == null){
-            Polys[0] = new DPolygon(new double[]{x1, x2, x3, x4}, new double[]{y1, y2, y3, y4}, new double[]{z, z, z, z}, c, false, 0, id);
+            Polys[0] = new DPolygon(new double[]{x1, x2, x3, x4}, new double[]{y1, y2, y3, y4}, new double[]{z, z, z, z}, c[0], false, 0, id);
         } else {
             Polys[0] = null;
         }
@@ -185,7 +210,7 @@ public class Cube {
             Polys[1].setY(new double[]{y4, y3, y2, y1});
             Polys[1].setZ(new double[]{z+height, z+height, z+height, z+height});
         } else if(polysToDraw[1] == true && Polys[1] == null){
-            Polys[1] = new DPolygon(new double[]{x4, x3, x2, x1}, new double[]{y4, y3, y2, y1}, new double[]{z+height, z+height, z+height, z+height}, c, false, 1, id);
+            Polys[1] = new DPolygon(new double[]{x4, x3, x2, x1}, new double[]{y4, y3, y2, y1}, new double[]{z+height, z+height, z+height, z+height}, c[1], false, 1, id);
         } else {    
             Polys[1] = null;
         } 
@@ -194,7 +219,7 @@ public class Cube {
             Polys[2].setY(new double[]{y1, y1, y2, y2});
             Polys[2].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[2] == true && Polys[2] == null){
-            Polys[2] = new DPolygon(new double[]{x1, x1, x2, x2}, new double[]{y1, y1, y2, y2}, new double[]{z, z+height, z+height, z}, c, false, 2, id);
+            Polys[2] = new DPolygon(new double[]{x1, x1, x2, x2}, new double[]{y1, y1, y2, y2}, new double[]{z, z+height, z+height, z}, c[2], false, 2, id);
         } else {
             Polys[2] = null;
         }
@@ -203,7 +228,7 @@ public class Cube {
             Polys[3].setY(new double[]{y2, y2, y3, y3});
             Polys[3].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[3] == true && Polys[3] == null){
-            Polys[3] = new DPolygon(new double[]{x2, x2, x3, x3}, new double[]{y2, y2, y3, y3},  new double[]{z, z+height, z+height, z}, c, false, 3, id);
+            Polys[3] = new DPolygon(new double[]{x2, x2, x3, x3}, new double[]{y2, y2, y3, y3},  new double[]{z, z+height, z+height, z}, c[3], false, 3, id);
         } else {
             Polys[3] = null;
         }
@@ -212,7 +237,7 @@ public class Cube {
             Polys[4].setY(new double[]{y3, y3, y4, y4});
             Polys[4].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[4] == true && Polys[4] == null){
-            Polys[4] = new DPolygon(new double[]{x3, x3, x4, x4}, new double[]{y3, y3, y4, y4},  new double[]{z, z+height, z+height, z}, c, false, 4, id);
+            Polys[4] = new DPolygon(new double[]{x3, x3, x4, x4}, new double[]{y3, y3, y4, y4},  new double[]{z, z+height, z+height, z}, c[4], false, 4, id);
         } else {
             Polys[4] = null;
         }
@@ -221,7 +246,7 @@ public class Cube {
             Polys[5].setY(new double[]{y4, y4, y1, y1});
             Polys[5].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[5] == true && Polys[5] == null){
-            Polys[5] = new DPolygon(new double[]{x4, x4, x1, x1}, new double[]{y4, y4, y1, y1},  new double[]{z, z+height, z+height, z}, c, false, 5, id);
+            Polys[5] = new DPolygon(new double[]{x4, x4, x1, x1}, new double[]{y4, y4, y1, y1},  new double[]{z, z+height, z+height, z}, c[5], false, 5, id);
         } else {
             Polys[5] = null;
         }
