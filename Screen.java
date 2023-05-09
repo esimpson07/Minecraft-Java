@@ -27,8 +27,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     static ArrayList<Chunk> Chunks = new ArrayList<Chunk>();
     
-    Random random = new Random();
-    
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
     private int selectedCube = -1;
@@ -41,16 +39,16 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     ViewTo = new double[] {0, 0, 0},
                     LightDir = new double[] {1, 1, 1};
 
-    //The smaller the zoom the more zoomed out you are and visa versa, although altering too far from 1000 will make it look pretty weird
+    //The smaller the zoom the more zoomed out you are and vice versa, although altering too far from 1000 will make it look pretty weird
     static double zoom = 1000, MinZoom = 500, MaxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
     
-    //FPS is a bit primitive, you can set the MaxFPS as high as u want
+    //FPS is a bit primitive, you can set the MaxFPS as high as you want
     double drawFPS = 0, maxFPS = 60, sleepTime = 1000.0/maxFPS, lastRefresh = 0, startTime = System.currentTimeMillis(), lastFPSCheck = 0, checks = 0;
     //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.1, heightTol = 1, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1;
+    double movementFactor = 0.1, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     static int[] NewOrder;
 
@@ -61,24 +59,71 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    int color = 9;
+    /*
+     * Stone is ID 0
+     * Cobblestone is ID 1
+     * Dirt is ID 2
+     * Grass is ID 3
+     * Planks are ID 4
+     * Logs are ID 5
+     * Leaves are ID 6
+     * Sand is ID 7
+     * Gravel is ID 8
+     * Glass ??? is ID 9
+     */
+    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass"};
+    
+    static final int stone = 0;
+    static final int cobblestone = 1;
+    static final int dirt = 2;
+    static final int grass = 3;
+    static final int planks = 4;
+    static final int logs = 5;
+    static final int leaves = 6;
+    static final int sand = 7;
+    static final int gravel = 8;
+    static final int glass = 9;
+    
+    static Color red = new Color(180,0,0);
+    static Color darkGreen = new Color(0,170,0);
+    static Color lightGreen = new Color(0,210,0);
+    static Color blue = new Color(0,0,180);
+    
+    static Color black = new Color(20,20,20);
+    static Color darkGray = new Color(65,65,65);
+    static Color midGray = new Color(80,80,80);
+    static Color lightGray = new Color(100,100,100);
+    static Color darkBrown = new Color(77,47,18);
+    static Color midBrown = new Color(133,73,45);
+    static Color lightBrown = new Color(175,125,77);
+    static Color beige = new Color(232,214,158);
     
     static Color bgColor = new Color(50,150,255);
     
-    Color red = new Color(180,0,0);
-    Color green = new Color(0,180,0);
-    Color blue = new Color(0,0,180);
-    
-    Color orange = new Color(180,120,0);
-    Color yellow = new Color(180,180,0);
-    Color cyan = new Color(0,180,180);
-    Color magenta = new Color(180,0,180);
-    
-    Color black = new Color(20,20,20);
-    Color gray = new Color(75,75,75);
-    Color brown = new Color(133,73,45);
-    
-    Color[] colors = new Color[]{brown,red,green,blue,orange,yellow,cyan,magenta,black,gray};
+    private void cubeLoader() {
+        int size = 32;
+        
+        final int octaveCount = 4;
+        final float persistence = 0.17f;
+        final int worldHeight = 32;
+        final int minHeight = 4;
+        final int maxHeight = 10;
+        final int minDirtDepth = 2;
+        final int maxDirtDepth = 3;
+        final int treeCount = 4;
+        
+        int[][][] map = Noise.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, treeCount);
+        for(int i = 0; i < size; i ++) {
+            for(int j = 0; j < size; j ++) {
+                for(int h = 0; h < map[0][0].length; h ++) {
+                    int cubeType = map[i][j][h];
+                    if(cubeType != -1) {
+                        Cubes.add(new Cube(i - size/2, j - size/2, h, 1, 1, 1, cubeType));
+                    }
+                }
+            }
+        }
+    }
     
     public Screen()
     {
@@ -91,14 +136,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         invisibleMouse();
         
-        int size = 40; 
-        for(int i = 0; i < size; i ++) {
-            for(int j = 0; j < size; j ++) {
-                for(int h = 0; h < 2; h ++) {
-                    Cubes.add(new Cube(i - size/2, j - size/2, h, 1, 1, 1, gray, Cubes.size()));
-                }
-            }
-        }
+        cubeLoader();
         
         for(int i = 0; i < Cubes.size(); i ++) {
             Cubes.get(i).softAdjacencyCheck();
@@ -118,8 +156,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         double pz = ViewFrom[2];
         double xDiff = Math.abs(x - px);
         double yDiff = Math.abs(y - py);
-        double zDiff = Math.abs(z + 0.5 - pz);
-        if(zDiff < heightTol + 0.5 && xDiff + 0.005 < sideTol && yDiff + 0.005 < sideTol) {
+        if((pz <= z + 1.5 || pz >= z - 0.5) && xDiff + 0.005 < sideTol && yDiff + 0.005 < sideTol) {
             return(true);
         } else {
             return(false);
@@ -130,7 +167,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     {
         //Clear screen and draw background color
         time = System.currentTimeMillis();
-        daylightCycle = 0.8 * Math.pow(Math.sin((double)time / 10000.0),2) + 0.2;
+        daylightCycle = 0.8 * Math.pow(Math.sin((double)time / 360000.0),2) + 0.2;
         Color fillColor = new Color((int)((double)bgColor.getRed() * daylightCycle), (int)((double)bgColor.getGreen() * daylightCycle), (int)((double)bgColor.getBlue() * daylightCycle));
         g.setColor(fillColor);
         g.fillRect(0, 0, (int)DDDTutorial.ScreenSize.getWidth(), (int)DDDTutorial.ScreenSize.getHeight());
@@ -167,12 +204,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
         
         int scale = 30;
-        g.setColor(Color.WHITE);
+        /*g.setColor(Color.WHITE);
         g.fillRect(((int)DDDTutorial.ScreenSize.getWidth() / 2) - (colors.length / 2) * scale,(int)DDDTutorial.ScreenSize.getHeight() - 2 * scale - 12,colors.length * scale - 17,16);
         for(int i = 0; i < colors.length; i ++) {
             g.setColor(colors[i]);
             g.drawString("|" + i + "|", ((int)DDDTutorial.ScreenSize.getWidth() / 2) - scale * ((colors.length / 2) - i), (int)DDDTutorial.ScreenSize.getHeight() - 2 * scale);
-        }
+        }*/
         
         SleepAndRefresh();
     }
@@ -190,8 +227,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         double temp;
         int tempr;        
-        for (int a = 0; a < k.length-1; a++)
-            for (int b = 0; b < k.length-1; b++)
+        for (int a = 0; a < k.length-1; a++) {
+            for (int b = 0; b < k.length-1; b++) {
                 if(k[b] < k[b + 1])
                 {
                     temp = k[b];
@@ -202,6 +239,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     NewOrder[b + 1] = tempr;
                     k[b + 1] = temp;
                 }
+            }
+        }
     }
     
     void drawInventory() {
@@ -308,24 +347,25 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 double px = ViewFrom[0];
                 double py = ViewFrom[1];
                 double pz = ViewFrom[2];
-                double xDiff = Math.abs(x - px);
-                double yDiff = Math.abs(y - py);
-                double zDiff = Math.abs(z + 0.5 - pz);
+                double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
+                double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
+                double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
+                double hzDiff = Math.abs(z + 0.5 - pz);
                 if(zDiff <= heightTol + 0.5 && xDiff <= sideTol && yDiff <= sideTol) {
-                    if(zDiff < heightTol + 0.5 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
+                    if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
                         ViewFrom[1] = y + sideTol;
-                    } else if(zDiff < heightTol + 0.5 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
+                    } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
                         ViewFrom[1] = y - sideTol;
-                    } else if(zDiff < heightTol + 0.5 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
+                    } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
                         ViewFrom[0] = x + sideTol;
-                    } else if(zDiff < heightTol + 0.5 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
+                    } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
                         ViewFrom[0] = x - sideTol;
-                    } else if(zDiff <= heightTol + 0.5 && pz > z + (1.5 - adjMovementFactor)) {
-                        ViewFrom[2] = z + heightTol + 1;
+                    } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                        ViewFrom[2] = z + heightTol + 0.5;
                         canJump = true;
                         zVel = 0;
-                    } else if(zDiff <= heightTol + 0.5 && pz < z - (1.5 - adjMovementFactor)) {
-                        ViewFrom[2] = z - heightTol;
+                    } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                        ViewFrom[2] = z - heightTol + 0.5;
                     }
                 }
             }
@@ -412,26 +452,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_E) {
             Keys[6] = true;
         }
-        if(e.getKeyCode() == KeyEvent.VK_0)
-            color = 0;
-        if(e.getKeyCode() == KeyEvent.VK_1)
-            color = 1;
-        if(e.getKeyCode() == KeyEvent.VK_2)
-            color = 2;
-        if(e.getKeyCode() == KeyEvent.VK_3)
-            color = 3;
-        if(e.getKeyCode() == KeyEvent.VK_4)
-            color = 4;
-        if(e.getKeyCode() == KeyEvent.VK_5)
-            color = 5;
-        if(e.getKeyCode() == KeyEvent.VK_6)
-            color = 6;
-        if(e.getKeyCode() == KeyEvent.VK_7)
-            color = 7;
-        if(e.getKeyCode() == KeyEvent.VK_8)
-            color = 8;
-        if(e.getKeyCode() == KeyEvent.VK_9)
-            color = 9;
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
@@ -497,7 +517,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     if(Cubes.get(i).getID() == selectedCube) {
                         double[] coords = Cubes.get(i).getAdjacentCube(selectedFace);
                         if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                            Cubes.add(new Cube(coords[0],coords[1],coords[2],1,1,1,colors[color],(int)(random.nextFloat() * 999999)));
+                            Cubes.add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
                             Cubes.get(Cubes.size() - 1).hardAdjacencyCheck();
                         }
                         break;
