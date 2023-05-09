@@ -47,7 +47,7 @@ public class DPolygon {
         
         DrawablePolygon.setDraw(draw);
         DrawablePolygon.updatePolygon(newX, newY);
-        avgDist = GetDist();
+        avgDist = getDist();
     }
     
     int getSide() {
@@ -69,7 +69,7 @@ public class DPolygon {
 
     }
         
-    double GetDist()
+    double getDist()
     {
         double total = 0;
         for(int i=0; i<x.length; i++) {
