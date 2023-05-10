@@ -23,7 +23,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
     static ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
     
-    static ArrayList<Cube> Cubes = new ArrayList<Cube>();
+    static ArrayList<ArrayList<Cube>> Cubes = new ArrayList<ArrayList<Cube>>();
     
     static ArrayList<Chunk> Chunks = new ArrayList<Chunk>();
     
@@ -35,7 +35,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //Used for keeping mouse in center
     Robot r;
 
-    static double[] ViewFrom = new double[] { 0, 0, 6},    
+    static double[] ViewFrom = new double[] { 1, 1, 24},    
                     ViewTo = new double[] {0, 0, 0},
                     LightDir = new double[] {1, 1, 1};
 
@@ -59,6 +59,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
+    final int size = 32;
+    final int chunkSize = 4;
+    final int worldHeight = 32;
+    
     /*
      * Stone is ID 0
      * Cobblestone is ID 1
@@ -71,6 +75,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
      * Gravel is ID 8
      * Glass ??? is ID 9
      */
+    
     static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass"};
     
     static final int stone = 0;
@@ -82,12 +87,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static final int leaves = 6;
     static final int sand = 7;
     static final int gravel = 8;
-    static final int glass = 9;
+    static final int water = 9;
     
     static Color red = new Color(180,0,0);
     static Color darkGreen = new Color(0,170,0);
     static Color lightGreen = new Color(0,210,0);
-    static Color blue = new Color(0,0,180);
+    static Color blue = new Color(0,0,180,120);
     
     static Color black = new Color(20,20,20);
     static Color darkGray = new Color(65,65,65);
@@ -101,27 +106,25 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static Color bgColor = new Color(50,150,255);
     
     private void cubeLoader() {
-        int size = 32;
-        
         final int octaveCount = 4;
         final float persistence = 0.17f;
-        final int worldHeight = 32;
-        final int minHeight = 4;
-        final int maxHeight = 10;
+        final int minHeight = 6;
+        final int maxHeight = 14;
         final int minDirtDepth = 2;
         final int maxDirtDepth = 3;
-        final int treeCount = 4;
+        final int waterDepth = 8;
+        final int treeCount = 8;
         
-        int[][][] map = Noise.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, treeCount);
-        for(int i = 0; i < size; i ++) {
-            for(int j = 0; j < size; j ++) {
-                for(int h = 0; h < map[0][0].length; h ++) {
-                    int cubeType = map[i][j][h];
-                    if(cubeType != -1) {
-                        Cubes.add(new Cube(i - size/2, j - size/2, h, 1, 1, 1, cubeType));
-                    }
-                }
+        int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
+        for(int x = 0; x < size / chunkSize; x ++) {
+            for(int y = 0; y < size / chunkSize; y ++) {
+                Chunks.add(new Chunk(map,chunkSize,worldHeight,x,y));
+                //Chunks.get(Chunks.size() - 1).setAlreadyInMap(true);
             }
+        }
+        
+        for(int i = 0; i < Chunks.size(); i ++) {
+            drawChunk(i);
         }
     }
     
@@ -138,12 +141,40 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         cubeLoader();
         
+        refreshCubes();
+    }
+    
+    public void refreshCubes() {
         for(int i = 0; i < Cubes.size(); i ++) {
-            Cubes.get(i).softAdjacencyCheck();
+            for(int j = 0; j < Cubes.get(i).size(); j ++) {
+                Cubes.get(i).get(j).updatePoly();
+            }
         }
         
         for(int i = 0; i < Cubes.size(); i ++) {
-            Cubes.get(i).updatePoly();
+            for(int j = 0; j < Cubes.get(i).size(); j ++) {
+                Cubes.get(i).get(j).softAdjacencyCheck();
+            }
+        }
+    }
+    
+    public void drawChunk(int i) {//int chunkX, int chunkY) {
+        if(!Chunks.get(i).isAlreadyInMap()) {
+            Cubes.add(Chunks.get(i).getCubeArray());
+            Cubes.get(Cubes.size() - 1).get(0).chunkOnlyAdjacencyCheck(i);
+            for(int j = 0; j < Cubes.get(Cubes.size() - 1).size(); j ++) {
+                Cubes.get(Cubes.size() - 1).get(j).updatePoly();
+            }
+            Chunks.get(i).setAlreadyInMap(true);
+        }
+    }
+    
+    public void undrawChunk(int i) {
+        if(Chunks.get(i).isAlreadyInMap()) {
+            for(int j = 0; j < Cubes.get(Cubes.indexOf(Chunks.get(i).getCubeArray())).size(); j ++) {
+                Cubes.get(i).get(j).removeCube();
+            }
+            Chunks.get(i).setAlreadyInMap(false);
         }
     }
     
@@ -173,6 +204,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         g.fillRect(0, 0, (int)DDDTutorial.ScreenSize.getWidth(), (int)DDDTutorial.ScreenSize.getHeight());
 
         CameraMovement();
+        
+        for(int i = 0; i < Chunks.size(); i ++) {
+            if(Chunks.get(i).getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= 4) {
+                drawChunk(i);
+            } else {
+                undrawChunk(i);
+            }
+        }
         
         //Calculated all that is general for this camera position
         Calculator.setPredeterminedInfo();
@@ -339,37 +378,41 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
         
         for(int i = 0; i < Cubes.size(); i ++) {
-            if(Cubes.get(i).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3) {
-                double[] attrs = Cubes.get(i).getAttributes();
-                double x = attrs[0] + (attrs[3] / 2);
-                double y = attrs[1] + (attrs[4] / 2);
-                double z = attrs[2] + (attrs[5] / 2);
-                double px = ViewFrom[0];
-                double py = ViewFrom[1];
-                double pz = ViewFrom[2];
-                double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
-                double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
-                double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
-                double hzDiff = Math.abs(z + 0.5 - pz);
-                if(zDiff <= heightTol + 0.5 && xDiff <= sideTol && yDiff <= sideTol) {
-                    if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
-                        ViewFrom[1] = y + sideTol;
-                    } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
-                        ViewFrom[1] = y - sideTol;
-                    } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
-                        ViewFrom[0] = x + sideTol;
-                    } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
-                        ViewFrom[0] = x - sideTol;
-                    } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
-                        ViewFrom[2] = z + heightTol + 0.5;
-                        canJump = true;
-                        zVel = 0;
-                    } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
-                        ViewFrom[2] = z - heightTol + 0.5;
+            for(int j = 0; j < Cubes.get(i).size(); j ++) {
+                //System.out.println(Cubes.get(i).get(j).getAttributes()[0] + "," + Cubes.get(i).get(j).getAttributes()[1] + "," + 
+                //Cubes.get(i).get(j).getAttributes()[2]);
+                if(Cubes.get(i).get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Cubes.get(i).get(j).isNormal()) {
+                    double[] attrs = Cubes.get(i).get(j).getAttributes();
+                    double x = attrs[0] + (attrs[3] / 2);
+                    double y = attrs[1] + (attrs[4] / 2);
+                    double z = attrs[2] + (attrs[5] / 2);
+                    double px = ViewFrom[0];
+                    double py = ViewFrom[1];
+                    double pz = ViewFrom[2];
+                    double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
+                    double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
+                    double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
+                    double hzDiff = Math.abs(z + 0.5 - pz);
+                    if(zDiff <= heightTol + 0.5 && xDiff <= sideTol && yDiff <= sideTol) {
+                        if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
+                            ViewFrom[1] = y + sideTol;
+                        } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
+                            ViewFrom[1] = y - sideTol;
+                        } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
+                            ViewFrom[0] = x + sideTol;
+                        } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
+                            ViewFrom[0] = x - sideTol;
+                        } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                            ViewFrom[2] = z + heightTol + 0.5;
+                            canJump = true;
+                            zVel = 0;
+                        } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                            ViewFrom[2] = z - heightTol + 0.5;
+                        }
                     }
                 }
+                updateView();
             }
-            updateView();
         }
     }
 
@@ -385,7 +428,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         PolygonOver = null;
         selectedCube = -1;
         for(int i = NewOrder.length-1; i >= 0; i --) {
-            if(DPolygons.get(NewOrder[i]).getDist() <= 5) {
+            //if(DPolygons.get(NewOrder[i]).getDist() <= 32) {
                 if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
                         && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
                 {
@@ -394,7 +437,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     selectedFace = DPolygons.get(NewOrder[i]).getSide();
                     break;
                 }
-            }
+            //}
         }
     }
 
@@ -504,8 +547,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(m.getButton() == MouseEvent.BUTTON1) {
             if(selectedCube != -1) {
                 for(int i = 0; i < Cubes.size(); i ++) {
-                    if(Cubes.get(i).getID() == selectedCube) {
-                        Cubes.get(i).removeCube();
+                    for(int j = 0; j < Cubes.get(i).size(); j ++) {
+                        if(Cubes.get(i).get(j).getID() == selectedCube) {
+                            Cubes.get(i).get(j).removeCube();
+                        }
                     }
                 }
             }
@@ -514,13 +559,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(m.getButton() == MouseEvent.BUTTON3) {
             if(selectedCube != -1) {
                 for(int i = 0; i < Cubes.size(); i ++) {
-                    if(Cubes.get(i).getID() == selectedCube) {
-                        double[] coords = Cubes.get(i).getAdjacentCube(selectedFace);
-                        if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                            Cubes.add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
-                            Cubes.get(Cubes.size() - 1).hardAdjacencyCheck();
+                    for(int j = 0; j < Cubes.get(i).size(); j ++) {
+                        if(Cubes.get(i).get(j).getID() == selectedCube) {
+                            double[] coords = Cubes.get(i).get(j).getAdjacentCube(selectedFace);
+                            if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
+                                //Cubes.add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
+                                //Cubes.get(Cubes.size() - 1).hardAdjacencyCheck();
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }
