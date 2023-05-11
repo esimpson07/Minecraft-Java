@@ -5,16 +5,17 @@ import java.awt.Polygon;
 public class PolygonObject {
     private Polygon poly;
     private Color color;
-    private boolean draw = true, visible = true, outlines = true;
+    private boolean draw = true, visible = true, outlines = true, normal;
     private double lighting = 1;
     
-    public PolygonObject(double[] x, double[] y, Color c, int n, boolean seeThrough)
+    public PolygonObject(double[] x, double[] y, Color c, int n, boolean normal)
     {
         poly = new Polygon();
         for(int i = 0; i<x.length; i++) {
             poly.addPoint((int)x[i], (int)y[i]);
         }
         this.color = c;
+        this.normal = normal;
     }
     
     void updatePolygon(double[] x, double[] y)
@@ -32,7 +33,7 @@ public class PolygonObject {
     {
         if(draw && visible)
         {
-            g.setColor(new Color((int)(color.getRed() * lighting), (int)(color.getGreen() * lighting), (int)(color.getBlue() * lighting)));
+            g.setColor(new Color((int)(color.getRed() * lighting), (int)(color.getGreen() * lighting), (int)(color.getBlue() * lighting), color.getAlpha()));
             g.fillPolygon(poly);
             if(outlines)
             {
@@ -40,8 +41,7 @@ public class PolygonObject {
                 g.drawPolygon(poly);
             }
 
-            if(Screen.PolygonOver == this)
-            {
+            if((Screen.PolygonOver == this) && normal) {
                 g.setColor(color);
                 g.fillPolygon(poly);
             }
