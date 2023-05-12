@@ -13,7 +13,6 @@ public class Chunk {
         this.size = size;
         this.height = height;
         this.cubeTypes = new int[size][size][height];
-        Screen.Chunks.add(this);
     }
     
     public Chunk(int[][][] array, int size, int height, int startX, int startY) {
