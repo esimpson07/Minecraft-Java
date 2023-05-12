@@ -6,14 +6,7 @@ public class Chunk {
     private int[][][] cubeTypes;
     private ArrayList<Cube> cubes;
     private int x, y;
-    private boolean inMap;
-    public Chunk(int x, int y, int size, int height) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.height = height;
-        this.cubeTypes = new int[size][size][height];
-    }
+    private boolean inMap = false, alreadyChecked = false;
     
     public Chunk(int[][][] array, int size, int height, int startX, int startY) {
         this.cubeTypes = new int[size][size][height];
@@ -43,6 +36,14 @@ public class Chunk {
     
     public void setAlreadyInMap(boolean state) {
         inMap = state;
+    }
+    
+    public boolean isAlreadyChecked() {
+        return alreadyChecked;
+    }
+    
+    public void setAlreadyChecked(boolean state) {
+        alreadyChecked = state;
     }
     
     public double getDist(double x, double y) {
