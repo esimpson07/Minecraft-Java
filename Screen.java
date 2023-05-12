@@ -47,7 +47,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     LightDir = new double[] {1, 1, 1};
 
     //The smaller the zoom the more zoomed out you are and vice versa, although altering too far from 1000 will make it look pretty weird
-    static double zoom = 1000, MinZoom = 500, MaxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
+    static double zoom = 1000, minZoom = 500, maxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
     
     //FPS is a bit primitive, you can set the MaxFPS as high as you want
     double drawFPS = 0, maxFPS = 60, sleepTime = 1000.0/maxFPS, lastRefresh = 0, startTime = System.currentTimeMillis(), lastFPSCheck = 0, checks = 0;
@@ -55,13 +55,13 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
     double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.1, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1;
+    double movementFactor = 0.1, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1, scroll = 0;
     //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
     static int[] NewOrder;
 
     static boolean OutLines = true;
     private boolean canJump = true;
-    boolean[] Keys = new boolean[7];
+    boolean[] Keys = new boolean[8];
     int numberKey = 1;
     
     long repaintTime = 0;
@@ -83,10 +83,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
      * Leaves are ID 6
      * Sand is ID 7
      * Gravel is ID 8
-     * Glass ??? is ID 9
+     * Water is ID 9
      */
     
-    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass","bedrock"};
+    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","bedrock"};
     
     static final int stone = 0;
     static final int cobblestone = 1;
@@ -590,7 +590,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_SHIFT)
             Keys[5] = false;
         if(e.getKeyCode() == KeyEvent.VK_E) 
-            Keys[7] = false;
+            Keys[6] = false;
         if(e.getKeyCode() == KeyEvent.VK_F) 
             Keys[7] = false;
     }
@@ -643,7 +643,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                             double[] coords = Cubes[i].get(j).getAdjacentCube(selectedFace);
                             int chunkIn = getChunkNumberIn((int)coords[0],(int)coords[1]);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                                Cubes[chunkIn].add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
+                                Cubes[chunkIn].add(new Cube(coords[0],coords[1],coords[2],1,1,1,numberKey - 1));
                                 Cubes[chunkIn].get(Cubes[chunkIn].size() - 1).hardAdjacencyCheck();
                             }
                             break;
@@ -658,7 +658,20 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
 
     public void mouseWheelMoved(MouseWheelEvent m) {
-        zoom -= 25 * m.getUnitsToScroll();
-        zoom = Calculator.clamp(zoom,MinZoom,MaxZoom);
+        if(Keys[7]) {
+            zoom -= 25 * m.getUnitsToScroll();
+            zoom = Calculator.clamp(zoom,minZoom,maxZoom);
+        } else {
+            scroll += m.getUnitsToScroll();
+            if(Math.abs(scroll) > 2) {
+                numberKey += scroll / Math.abs(scroll);
+                scroll /= 2;
+                if(numberKey > 9) {
+                    numberKey = 1;
+                } else if(numberKey < 1) {
+                    numberKey = 9;
+                }
+            }
+        }
     }
 }
