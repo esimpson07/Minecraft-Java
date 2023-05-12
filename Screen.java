@@ -62,14 +62,16 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static boolean OutLines = true;
     private boolean canJump = true;
     boolean[] Keys = new boolean[7];
+    int numberKey = 1;
     
     long repaintTime = 0;
     long time = 0;
     
-    static final int size = 16;
-    static final int chunkSize = 4;
-    static final int renderDistance = 4;
+    static final int size = 32;
+    static final int chunkSize = 8;
     static final int worldHeight = 32;
+    static final double renderDistance = 16;
+    static final double renderDistanceInChunks = renderDistance / chunkSize;
     
     /*
      * Stone is ID 0
@@ -133,12 +135,16 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         Chunks = new Chunk[(size / chunkSize) * (size / chunkSize)];
         Cubes = new ArrayList[Chunks.length];
         
+        System.out.println("Starting map generation!");
+        
         int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
         for(int x = 0; x < size / chunkSize; x ++) {
             for(int y = 0; y < size / chunkSize; y ++) {
                 Chunks[x + (y * size / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
             }
         }
+        
+        System.out.println("Map generated.");
         
         ViewFrom[0] = size / 2 + 0.5;
         ViewFrom[1] = size / 2 + 0.5;
@@ -149,9 +155,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             }
         }
         
+        System.out.println("Initially drawing chunks.");
+        
         for(int i = 0; i < Chunks.length; i ++) {
             drawChunk(i);
+            System.out.println(100 * (double)(i + 1) / (double)Chunks.length + "%");
         }
+        
+        System.out.println("Done drawing chunks.");
     }
     
     public Screen()
@@ -171,20 +182,26 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
     
     public void refreshCubes() {
+        System.out.println("Checking cube adjacencies & deleting faces");
         for(int i = 0; i < Cubes.length; i ++) {
             if(Cubes[i] != null) {
                 for(int j = 0; j < Cubes[i].size(); j ++) {
                     Cubes[i].get(j).softAdjacencyCheck();
                 }
             }
+            System.out.println(100 * (double)(i + 1) / Cubes.length);
         }
+        System.out.println("Done checking adjacencies. Finally updating polygons.");
         for(int i = 0; i < Cubes.length; i ++) {
             if(Cubes[i] != null) {
                 for(int j = 0; j < Cubes[i].size(); j ++) {
                     Cubes[i].get(j).updatePoly();
                 }
             }
+            System.out.println(100 * (double)(i + 1) / Cubes.length);
         }
+        
+        System.out.println("Done!");
     }
     
     public void drawChunk(int i) {
@@ -209,7 +226,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     public void determineChunksToDraw() {
         for(int i = 0; i < Chunks.length; i ++) {
-            if(Chunks[i].getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= renderDistance) {
+            if(Chunks[i].getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= renderDistanceInChunks) {
                 drawChunk(i);
             } else {
                 undrawChunk(i);
@@ -300,7 +317,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         //0 at coordinate 112,28 -> increments of 58 pixels
         
-        g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 112 + 8,(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
+        g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 121 + (int)(92.2 * (numberKey - 1)),(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
         
         SleepAndRefresh();
     }
@@ -332,12 +349,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 }
             }
         }
-    }
-    
-    void drawInventory() {
-        /*if(Keys[6]) {
-            inventory.draw(g);
-        }*/
     }
         
     void invisibleMouse()
@@ -453,11 +464,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                                 ViewFrom[0] = x + sideTol;
                             } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
                                 ViewFrom[0] = x - sideTol;
-                            } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                            } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
                                 ViewFrom[2] = z + heightTol + 0.5;
                                 canJump = true;
                                 zVel = 0;
-                            } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
+                            } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
                                 ViewFrom[2] = z - heightTol + 0.5;
                             }
                         }
@@ -547,6 +558,18 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_E) {
             Keys[6] = true;
         }
+        if(e.getKeyCode() == KeyEvent.VK_F) {
+            Keys[7] = true;
+        }
+        if(e.getKeyCode() == KeyEvent.VK_1) { numberKey = 1; }
+        if(e.getKeyCode() == KeyEvent.VK_2) { numberKey = 2; }
+        if(e.getKeyCode() == KeyEvent.VK_3) { numberKey = 3; }
+        if(e.getKeyCode() == KeyEvent.VK_4) { numberKey = 4; }
+        if(e.getKeyCode() == KeyEvent.VK_5) { numberKey = 5; }
+        if(e.getKeyCode() == KeyEvent.VK_6) { numberKey = 6; }
+        if(e.getKeyCode() == KeyEvent.VK_7) { numberKey = 7; }
+        if(e.getKeyCode() == KeyEvent.VK_8) { numberKey = 8; }
+        if(e.getKeyCode() == KeyEvent.VK_9) { numberKey = 9; }
         if(e.getKeyCode() == KeyEvent.VK_O)
             OutLines = !OutLines;
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
@@ -566,6 +589,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             Keys[4] = false;
         if(e.getKeyCode() == KeyEvent.VK_SHIFT)
             Keys[5] = false;
+        if(e.getKeyCode() == KeyEvent.VK_E) 
+            Keys[7] = false;
+        if(e.getKeyCode() == KeyEvent.VK_F) 
+            Keys[7] = false;
     }
 
     public void keyTyped(KeyEvent e) {
