@@ -9,9 +9,9 @@ public class DPolygon {
     private double avgDist;
     private int side, id;
     
-    private boolean draw = true, normal = true;
+    private boolean draw = true, seeThrough = false;
     
-    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean normal, int side, int id)
+    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean seeThrough, int side, int id)
     {
         this.x = x;
         this.y = y;
@@ -19,13 +19,13 @@ public class DPolygon {
         this.c = c;
         this.id = id;
         this.side = side;
-        this.normal = normal;
+        this.seeThrough = seeThrough;
         createPolygon();
     }
     
     void createPolygon()
     {
-        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size(), normal);
+        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size(), seeThrough);
     }
     
     void updatePolygon()
@@ -66,6 +66,7 @@ public class DPolygon {
               /(Math.sqrt(Screen.LightDir[0] * Screen.LightDir[0] + Screen.LightDir[1] * Screen.LightDir[1] + Screen.LightDir[2] * Screen.LightDir[2])));
         
         DrawablePolygon.setLighting(Calculator.clamp(0.2 + 1 - Math.sqrt(Math.toDegrees(angle)/180),0,1));
+
     }
         
     double getDist()
