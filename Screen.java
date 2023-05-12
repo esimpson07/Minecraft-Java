@@ -59,7 +59,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    final int size = 32;
+    final int size = 40;
     final int chunkSize = 4;
     final int worldHeight = 32;
     
@@ -89,10 +89,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static final int gravel = 8;
     static final int water = 9;
     
-    static Color red = new Color(180,0,0);
     static Color darkGreen = new Color(0,170,0);
     static Color lightGreen = new Color(0,210,0);
-    static Color blue = new Color(0,0,180,120);
+    static Color waterBlue = new Color(0,0,180,120);
     
     static Color black = new Color(20,20,20);
     static Color darkGray = new Color(65,65,65);
@@ -109,10 +108,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         final int octaveCount = 4;
         final float persistence = 0.17f;
         final int minHeight = 6;
-        final int maxHeight = 14;
+        final int maxHeight = 20;
         final int minDirtDepth = 2;
         final int maxDirtDepth = 3;
-        final int waterDepth = 8;
+        final int waterDepth = 12;
         final int treeCount = 8;
         
         int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
@@ -147,13 +146,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     public void refreshCubes() {
         for(int i = 0; i < Cubes.size(); i ++) {
             for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                Cubes.get(i).get(j).updatePoly();
+                Cubes.get(i).get(j).softAdjacencyCheck();
             }
         }
-        
         for(int i = 0; i < Cubes.size(); i ++) {
             for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                Cubes.get(i).get(j).softAdjacencyCheck();
+                Cubes.get(i).get(j).updatePoly();
             }
         }
     }
@@ -172,13 +170,26 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     public void undrawChunk(int i) {
         if(Chunks.get(i).isAlreadyInMap()) {
             for(int j = 0; j < Cubes.get(Cubes.indexOf(Chunks.get(i).getCubeArray())).size(); j ++) {
-                Cubes.get(i).get(j).removeCube();
+                Cubes.get(i).get(j).removeCubeInChunk();
             }
             Chunks.get(i).setAlreadyInMap(false);
         }
     }
     
-    boolean willCollide(double[] attrs) {
+    private int[] getChunkCoordsIn(int x, int y) {
+        return new int[]{x / chunkSize,y / chunkSize};
+    }
+    
+    private int getChunkNumberIn(int x, int y) {
+        for(int i = 0; i < Chunks.size(); i ++) {
+            if(Chunks.get(i).getX() == x / chunkSize && Chunks.get(i).getY() == y / chunkSize) {
+                return i;
+            }
+        } 
+        return -1;
+    }
+    
+    private boolean willCollide(double[] attrs) {
         double x = attrs[0] + (attrs[3] / 2);
         double y = attrs[1] + (attrs[4] / 2);
         double z = attrs[2] + (attrs[5] / 2);
@@ -379,8 +390,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         for(int i = 0; i < Cubes.size(); i ++) {
             for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                //System.out.println(Cubes.get(i).get(j).getAttributes()[0] + "," + Cubes.get(i).get(j).getAttributes()[1] + "," + 
-                //Cubes.get(i).get(j).getAttributes()[2]);
                 if(Cubes.get(i).get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Cubes.get(i).get(j).isNormal()) {
                     double[] attrs = Cubes.get(i).get(j).getAttributes();
                     double x = attrs[0] + (attrs[3] / 2);
@@ -428,7 +437,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         PolygonOver = null;
         selectedCube = -1;
         for(int i = NewOrder.length-1; i >= 0; i --) {
-            //if(DPolygons.get(NewOrder[i]).getDist() <= 32) {
+            if(DPolygons.get(NewOrder[i]).getDist() <= 6) {
                 if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
                         && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
                 {
@@ -437,7 +446,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     selectedFace = DPolygons.get(NewOrder[i]).getSide();
                     break;
                 }
-            //}
+            }
         }
     }
 
@@ -563,8 +572,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                         if(Cubes.get(i).get(j).getID() == selectedCube) {
                             double[] coords = Cubes.get(i).get(j).getAdjacentCube(selectedFace);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                                //Cubes.add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
-                                //Cubes.get(Cubes.size() - 1).hardAdjacencyCheck();
+                                Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
+                                Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).get(Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).size() - 1).hardAdjacencyCheck();
                             }
                             break;
                         }
