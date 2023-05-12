@@ -93,12 +93,12 @@ public class Cube {
     }
     
     void softAdjacencyCheck() {
-        for(int i = 0; i < Screen.Cubes.size(); i ++) {
-            for(int j = 0; j < Screen.Cubes.get(i).size(); j ++) {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
                 for(int f = 0; f < 6; f ++) {
-                    if(Screen.Cubes.get(i).get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes.get(i).get(j).getCoords()[1] == 
-                        getAdjacentCube(f)[1] && Screen.Cubes.get(i).get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                        ((Screen.Cubes.get(i).get(j).isNormal() == normal) || !normal)) {
+                    if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                        getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                        ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
                         polysToDraw[f] = false;
                         updatePoly();
                     }
@@ -108,12 +108,11 @@ public class Cube {
     }
     
     void chunkOnlyAdjacencyCheck(int i) {
-        for(int j = 0; j < Screen.Cubes.get(i).size(); j ++) {
+        for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
             for(int f = 0; f < 6; f ++) {
-                if(Screen.Cubes.get(i).get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes.get(i).get(j).getCoords()[1] == 
-                    getAdjacentCube(f)[1] && Screen.Cubes.get(i).get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                    ((Screen.Cubes.get(i).get(j).isNormal() == normal) || !normal)) {
-                    System.out.println("true2");
+                if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                    getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                    ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
                     polysToDraw[f] = false;
                     updatePoly();
                 }
@@ -122,16 +121,15 @@ public class Cube {
     }
     
     void hardAdjacencyCheck() {
-        for(int i = 0; i < Screen.Cubes.size(); i ++) {
-            for(int j = 0; j < Screen.Cubes.get(i).size(); j ++) {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
                 for(int f = 0; f < 6; f ++) {
-                    if(Screen.Cubes.get(i).get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes.get(i).get(j).getCoords()[1] == 
-                        getAdjacentCube(f)[1] && Screen.Cubes.get(i).get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                        ((Screen.Cubes.get(i).get(j).isNormal() == normal) || !normal)) {
-                        System.out.println("true1");
+                    if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                        getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                        ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
                         polysToDraw[f] = false;
                         updatePoly();
-                        Screen.Cubes.get(i).get(j).softAdjacencyCheck();
+                        Screen.Cubes[i].get(j).softAdjacencyCheck();
                     }
                 }
             }
@@ -322,13 +320,13 @@ public class Cube {
     }
     
     void changeAdjacentCubePoly(int face, boolean state) {
-        for(int i = 0; i < Screen.Cubes.size(); i ++) {
-            for(int j = 0; j < Screen.Cubes.get(i).size(); j ++) {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
                 for(int f = 0; f < 6; f ++) {
-                    if(Screen.Cubes.get(i).get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes.get(i).get(j).getCoords()[1] == 
-                        getAdjacentCube(f)[1] && Screen.Cubes.get(i).get(j).getCoords()[2] == getAdjacentCube(f)[2]) {
-                        Screen.Cubes.get(i).get(j).changeAdjacentPoly(face,state);
-                        Screen.Cubes.get(i).get(j).updatePoly();
+                    if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                        getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && Screen.Cubes[i].get(j).isNormal()) {
+                        Screen.Cubes[i].get(j).changeAdjacentPoly(face,state);
+                        Screen.Cubes[i].get(j).updatePoly();
                     }
                 }
             }
@@ -338,10 +336,8 @@ public class Cube {
     void removeCubeInChunk()
     {
         for(int i = 0; i < 6; i ++) {
-            //changeAdjacentCubePoly(i,true);
             Screen.DPolygons.remove(Polys[i]);
         }
-        Screen.Cubes.remove(this);
     }
     
     void removeCube()
@@ -350,8 +346,8 @@ public class Cube {
             changeAdjacentCubePoly(i,true);
             Screen.DPolygons.remove(Polys[i]);
         }
-        for(int i = 0; i < Screen.Cubes.size(); i ++) {
-            Screen.Cubes.get(i).remove(this);
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            Screen.Cubes[i].remove(this);
         }
     }
 }
