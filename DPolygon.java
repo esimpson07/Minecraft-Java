@@ -9,9 +9,9 @@ public class DPolygon {
     private double avgDist;
     private int side, id;
     
-    private boolean draw = true, seeThrough = false;
+    private boolean draw = true, normal = true;
     
-    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean seeThrough, int side, int id)
+    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean normal, int side, int id)
     {
         this.x = x;
         this.y = y;
@@ -19,13 +19,13 @@ public class DPolygon {
         this.c = c;
         this.id = id;
         this.side = side;
-        this.seeThrough = seeThrough;
+        this.normal = normal;
         createPolygon();
     }
     
     void createPolygon()
     {
-        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size(), seeThrough);
+        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size(), normal);
     }
     
     void updatePolygon()
@@ -92,6 +92,10 @@ public class DPolygon {
     
     double getAvgDist() {
         return avgDist;
+    }
+    
+    boolean isNormal() {
+        return normal;
     }
     
     double[] getX() { return x; }
