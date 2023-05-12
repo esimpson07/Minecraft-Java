@@ -439,7 +439,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int i = NewOrder.length-1; i >= 0; i --) {
             if(DPolygons.get(NewOrder[i]).getDist() <= 6) {
                 if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible())
+                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && DPolygons.get(NewOrder[i]).isNormal())
                 {
                     PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
                     selectedCube = DPolygons.get(NewOrder[i]).getID();
@@ -557,7 +557,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             if(selectedCube != -1) {
                 for(int i = 0; i < Cubes.size(); i ++) {
                     for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                        if(Cubes.get(i).get(j).getID() == selectedCube) {
+                        if(Cubes.get(i).get(j).getID() == selectedCube && Cubes.get(i).get(j).isNormal()) {
                             Cubes.get(i).get(j).removeCube();
                         }
                     }
@@ -569,7 +569,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             if(selectedCube != -1) {
                 for(int i = 0; i < Cubes.size(); i ++) {
                     for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                        if(Cubes.get(i).get(j).getID() == selectedCube) {
+                        if(Cubes.get(i).get(j).getID() == selectedCube && Cubes.get(i).get(j).isNormal()) {
                             double[] coords = Cubes.get(i).get(j).getAdjacentCube(selectedFace);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
                                 Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
