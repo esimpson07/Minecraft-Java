@@ -64,6 +64,10 @@ public class PolygonObject {
         return visible;
     }
     
+    boolean isNormal() {
+        return normal;
+    }
+    
     void setLighting(double value) {
         lighting = value;
     }
