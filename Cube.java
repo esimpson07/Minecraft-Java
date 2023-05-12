@@ -137,13 +137,6 @@ public class Cube {
         }
         adjacentChunks[4] = chunk;
         
-        System.out.println("left = "+ adjacentChunks[0]);
-        System.out.println("right = "+ adjacentChunks[1]);
-        System.out.println("behind = "+ adjacentChunks[2]);
-        System.out.println("forward = "+ adjacentChunks[3]);
-        System.out.println("chunk = "+ adjacentChunks[4]);
-        
-        
         for(int i = 0; i < adjacentChunks.length; i ++) {
             for(int f = 0; f < 6; f ++) {
                 if(adjacentChunks[i] != -1) {
