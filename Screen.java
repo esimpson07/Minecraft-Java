@@ -15,7 +15,10 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
+import java.io.IOException;
+import java.io.File;
 
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 public class Screen extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener{
@@ -29,6 +32,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
+    
+    private BufferedImage hotbar;
+    private BufferedImage selector;
+    
     private int selectedCube = -1;
     private int selectedFace = -1;
 
@@ -76,7 +83,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
      * Glass ??? is ID 9
      */
     
-    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass"};
+    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass","bedrock"};
     
     static final int stone = 0;
     static final int cobblestone = 1;
@@ -88,6 +95,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static final int sand = 7;
     static final int gravel = 8;
     static final int water = 9;
+    static final int bedrock = 10;
     
     static Color darkGreen = new Color(0,170,0);
     static Color lightGreen = new Color(0,210,0);
@@ -105,6 +113,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static Color bgColor = new Color(50,150,255);
     
     private void cubeLoader() {
+        try {
+            hotbar = ImageIO.read(new File("Resources/Images/hotbar.png"));
+            selector = ImageIO.read(new File("Resources/Images/selector.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         final int octaveCount = 4;
         final float persistence = 0.17f;
         final int minHeight = 6;
@@ -200,7 +214,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         double pz = ViewFrom[2];
         double xDiff = Math.abs(x - px);
         double yDiff = Math.abs(y - py);
-        if((pz <= z + 1.5 || pz >= z - 0.5) && xDiff + 0.005 < sideTol && yDiff + 0.005 < sideTol) {
+        double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
+        if(zDiff <= heightTol + 0.5 - 0.005 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) {
             return(true);
         } else {
             return(false);
@@ -251,17 +266,15 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         drawMouseAim(g);            
         
         //FPS display
-        g.drawString("FPS: " + (int)drawFPS + " (Benchmark)", 40, 40);
+        g.drawString("FPS: " + (int)drawFPS, 40, 40);
         
         g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
         
-        int scale = 30;
-        /*g.setColor(Color.WHITE);
-        g.fillRect(((int)DDDTutorial.ScreenSize.getWidth() / 2) - (colors.length / 2) * scale,(int)DDDTutorial.ScreenSize.getHeight() - 2 * scale - 12,colors.length * scale - 17,16);
-        for(int i = 0; i < colors.length; i ++) {
-            g.setColor(colors[i]);
-            g.drawString("|" + i + "|", ((int)DDDTutorial.ScreenSize.getWidth() / 2) - scale * ((colors.length / 2) - i), (int)DDDTutorial.ScreenSize.getHeight() - 2 * scale);
-        }*/
+        g.drawImage(hotbar,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2, (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight(), null);
+        
+        //0 at coordinate 112,28 -> increments of 58 pixels
+        
+        g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 112 + 8,(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
         
         SleepAndRefresh();
     }
@@ -404,7 +417,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
                     double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
                     double hzDiff = Math.abs(z + 0.5 - pz);
-                    if(zDiff <= heightTol + 0.5 && xDiff <= sideTol && yDiff <= sideTol) {
+                    if(zDiff <= heightTol + 0.5 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) {
                         if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
                             ViewFrom[1] = y + sideTol;
                         } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
@@ -559,7 +572,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             if(selectedCube != -1) {
                 for(int i = 0; i < Cubes.length; i ++) {
                     for(int j = 0; j < Cubes[i].size(); j ++) {
-                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal()) {
+                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal() && !Cubes[i].get(j).isBedrock()) {
                             Cubes[i].get(j).removeCube();
                         }
                     }
@@ -573,6 +586,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     for(int j = 0; j < Cubes[i].size(); j ++) {
                         if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal()) {
                             double[] coords = Cubes[i].get(j).getAdjacentCube(selectedFace);
+                            System.out.println(coords[0] + "," + coords[1] + "," + coords[2]);
                             int chunkIn = getChunkNumberIn((int)coords[0],(int)coords[1]);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
                                 Cubes[chunkIn].add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
