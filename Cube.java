@@ -115,34 +115,27 @@ public class Cube {
         int chunk = Screen.getChunkNumberIn((int)x,(int)y);
         int sideLength = Screen.size / Screen.chunkSize;
         int[] adjacentChunks = new int[5]; //left (chunk - 1) right (chunk + 1) above (chunk + sideLength) below (chunk - sideLength)
-        if(chunk % sideLength != 0) {
+        if(chunk % sideLength != 0 && (int)x % sideLength == 0) {
             adjacentChunks[0] = chunk - 1;
         } else {
             adjacentChunks[0] = -1;
         }
-        if(chunk % sideLength != sideLength - 1) {
+        if(chunk % sideLength != sideLength - 1 && (int)x % sideLength == sideLength - 1) {
             adjacentChunks[1] = chunk + 1;
         } else {
             adjacentChunks[1] = -1;
         }
-        if(chunk >= sideLength) {
+        if(chunk >= sideLength && (int)y % sideLength == 0) {
             adjacentChunks[2] = chunk - sideLength;
         } else {
             adjacentChunks[2] = -1;
         }
-        if(chunk < Math.pow(sideLength,2) - sideLength) {
+        if(chunk < Math.pow(sideLength,2) - sideLength && (int)y % sideLength == sideLength - 1) {
             adjacentChunks[3] = chunk + sideLength;
         } else {
             adjacentChunks[3] = -1;
         }
         adjacentChunks[4] = chunk;
-        
-        System.out.println("left = "+ adjacentChunks[0]);
-        System.out.println("right = "+ adjacentChunks[1]);
-        System.out.println("behind = "+ adjacentChunks[2]);
-        System.out.println("forward = "+ adjacentChunks[3]);
-        System.out.println("chunk = "+ adjacentChunks[4]);
-        
         
         for(int i = 0; i < adjacentChunks.length; i ++) {
             for(int f = 0; f < 6; f ++) {
