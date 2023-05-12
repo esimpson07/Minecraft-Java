@@ -1,11 +1,11 @@
-import java.util.Random;
+import java.util.Random; 
 import java.util.Scanner;
  
 /**
  * For detailed info and implementation see: <a href="http://devmag.org.za/2009/04/25/perlin-noise/">Perlin-Noise</a>
  */
 public class NoiseGenerator {
-    static int[][][] generatePerlinVolume (int width, int height, int octaveCount, float persistence, int worldHeight, int minGroundHeight, int maxGroundHeight, int minDirtDepth, int maxDirtDepth, int treeCount) {
+    static int[][][] generatePerlinVolume (int width, int height, int octaveCount, float persistence, int worldHeight, int minGroundHeight, int maxGroundHeight, int minDirtDepth, int maxDirtDepth, int waterDepth, int treeCount) {
         int range = maxGroundHeight - minGroundHeight;
         Random r = new Random();
         
@@ -19,9 +19,9 @@ public class NoiseGenerator {
                 }
             }
         }
-        
+
         int[][] heightmap = generatePerlinNoise(width, height, octaveCount, persistence, minGroundHeight, maxGroundHeight);
-        
+
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 int d = heightmap[i][j];
@@ -30,7 +30,7 @@ public class NoiseGenerator {
                 for (int k = maxGroundHeight - 1; k >= 0; k--) {
                     if (k >= d) {
                         retVal[i][j][k] = -1;
-                    } else if(dirtCount == 0) {
+                    } else if(dirtCount == 0 && k >= waterDepth) {
                         retVal[i][j][k] = Screen.grass;
                         dirtCount ++;
                     } else if (dirtCount < dirtDepth) {
@@ -42,9 +42,19 @@ public class NoiseGenerator {
                 }
             }
         }
-        
-        addTrees(retVal, treeCount);
-        
+
+        for(int i = 0; i < width; i ++) {
+            for(int j = 0; j < height; j ++) {
+                int d = heightmap[i][j];
+                for(int k = waterDepth; k >= minGroundHeight; k --) {
+                    if(retVal[i][j][k] == -1) {
+                        retVal[i][j][k] = Screen.water;
+                    }
+                }
+            }
+        }
+        addTrees(retVal,treeCount);
+
         return (retVal);
     }
     
@@ -76,7 +86,7 @@ public class NoiseGenerator {
                     // if the current block, going from the top, is occupied
                     if (val != 0) {
                         // Is this a dirt block?
-                        if (val == Screen.dirt) {
+                        if (val == Screen.grass) {
                             startZ = h + 1;
                         }
                         notFound = false;
