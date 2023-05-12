@@ -1,629 +1,397 @@
-import java.awt.AWTException;
 import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Robot;
-import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Random;
-import java.io.IOException;
-import java.io.File;
 
-import javax.imageio.ImageIO;
-import javax.swing.JPanel;
-
-public class Screen extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener{
+public class Cube {
+    private double x, y, z, width, length, height, rotation = Math.PI*0.75;
+    private double[] RotAdd = new double[4];
+    private double x1, x2, x3, x4, y1, y2, y3, y4;
+    private DPolygon[] Polys = new DPolygon[6];
+    private Color[] c;
+    private boolean[] polysToDraw;
+    private double[] angle;
+    private int id;
+    private int type;
+    private boolean normal;
     
-    //ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
-    static ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
-    
-    static ArrayList<Cube>[] Cubes;
-    
-    static Chunk[] Chunks;
-    
-    //The polygon that the mouse is currently over
-    static PolygonObject PolygonOver = null;
-    
-    private BufferedImage hotbar;
-    private BufferedImage selector;
-    
-    private int selectedCube = -1;
-    private int selectedFace = -1;
-
-    //Used for keeping mouse in center
-    Robot r;
-
-    static double[] ViewFrom = new double[] {0, 0, 0},    
-                    ViewTo = new double[] {0, 0, 0},
-                    LightDir = new double[] {1, 1, 1};
-
-    //The smaller the zoom the more zoomed out you are and vice versa, although altering too far from 1000 will make it look pretty weird
-    static double zoom = 1000, MinZoom = 500, MaxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
-    
-    //FPS is a bit primitive, you can set the MaxFPS as high as you want
-    double drawFPS = 0, maxFPS = 60, sleepTime = 1000.0/maxFPS, lastRefresh = 0, startTime = System.currentTimeMillis(), lastFPSCheck = 0, checks = 0;
-    //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
-    //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
-    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
-
-    double movementFactor = 0.1, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1;
-    //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
-    static int[] NewOrder;
-
-    static boolean OutLines = true;
-    private boolean canJump = true;
-    boolean[] Keys = new boolean[7];
-    
-    long repaintTime = 0;
-    long time = 0;
-    
-    final int size = 32;
-    final int chunkSize = 4;
-    final int worldHeight = 32;
-    
-    /*
-     * Stone is ID 0
-     * Cobblestone is ID 1
-     * Dirt is ID 2
-     * Grass is ID 3
-     * Planks are ID 4
-     * Logs are ID 5
-     * Leaves are ID 6
-     * Sand is ID 7
-     * Gravel is ID 8
-     * Glass ??? is ID 9
-     */
-    
-    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","glass","bedrock"};
-    
-    static final int stone = 0;
-    static final int cobblestone = 1;
-    static final int dirt = 2;
-    static final int grass = 3;
-    static final int planks = 4;
-    static final int logs = 5;
-    static final int leaves = 6;
-    static final int sand = 7;
-    static final int gravel = 8;
-    static final int water = 9;
-    static final int bedrock = 10;
-    
-    static Color darkGreen = new Color(0,170,0);
-    static Color lightGreen = new Color(0,210,0);
-    static Color waterBlue = new Color(0,0,180,120);
-    
-    static Color black = new Color(20,20,20);
-    static Color darkGray = new Color(65,65,65);
-    static Color midGray = new Color(80,80,80);
-    static Color lightGray = new Color(100,100,100);
-    static Color darkBrown = new Color(77,47,18);
-    static Color midBrown = new Color(133,73,45);
-    static Color lightBrown = new Color(175,125,77);
-    static Color beige = new Color(232,214,158);
-    
-    static Color bgColor = new Color(50,150,255);
-    
-    private void cubeLoader() {
-        System.out.println(System.currentTimeMillis());
-        try {
-            hotbar = ImageIO.read(new File("Resources/Images/hotbar.png"));
-            selector = ImageIO.read(new File("Resources/Images/selector.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
-        final int octaveCount = 4;
-        final float persistence = 0.17f;
-        final int minHeight = 6;
-        final int maxHeight = 20;
-        final int minDirtDepth = 2;
-        final int maxDirtDepth = 3;
-        final int waterDepth = 12;
-        final int treeCount = 8;
-        
-        Chunks = new Chunk[(size / chunkSize) * (size / chunkSize)];
-        Cubes = new ArrayList[Chunks.length];
-        
-        int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
-        for(int x = 0; x < size / chunkSize; x ++) {
-            for(int y = 0; y < size / chunkSize; y ++) {
-                Chunks[x + (y * size / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
-            }
-        }
-        
-        ViewFrom[0] = size / 2 + 0.5;
-        ViewFrom[1] = size / 2 + 0.5;
-        for(int i = 0; i < map[size / 2][size / 2].length; i ++) {
-            if(map[size / 2][size / 2][i] == -1) {
-                ViewFrom[2] = i + 1;
-                break;
-            }
-        }
-        
-        for(int i = 0; i < Chunks.length; i ++) {
-            drawChunk(i);
-            undrawChunk(i);
-            Chunks[i].setAlreadyInMap(true);
-        }
-        
-        System.out.println(System.currentTimeMillis());
-    }
-    
-    public Screen()
+    public Cube(double x, double y, double z, double width, double length, double height, int type)
     {
-        this.addKeyListener(this);
-        setFocusable(true);        
+        this.id = (int)(Math.random() * 2147483647);
+        this.c = setValuesForType(type);
+        this.polysToDraw = new boolean[]{true,true,true,true,true,true};
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.id = id;
+        this.type = type;
+        this.width = width;
+        this.length = length;
+        this.height = height;
         
-        this.addMouseListener(this);
-        this.addMouseMotionListener(this);
-        this.addMouseWheelListener(this);
-        
-        invisibleMouse();
-        
-        cubeLoader();
-        
-        refreshCubes();
+        setRotAdd();
+        updatePoly();
     }
     
-    public void refreshCubes() {
-        for(int i = 0; i < Cubes.length; i ++) {
-            if(Cubes[i] != null) {
-                for(int j = 0; j < Cubes[i].size(); j ++) {
-                    Cubes[i].get(j).softAdjacencyCheck();
+    Color[] setValuesForType(int type) {
+        normal = true;
+        if(type == Screen.stone) {
+            return(new Color[]{Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray});
+        } else if(type == Screen.cobblestone) {
+            return(new Color[]{Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray,Screen.darkGray});
+        } else if(type == Screen.dirt) {
+            return(new Color[]{Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.grass) {
+            return(new Color[]{Screen.darkBrown,Screen.lightGreen,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.planks) {
+            return(new Color[]{Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown,Screen.lightBrown});
+        } else if(type == Screen.logs) {
+            return(new Color[]{Screen.lightBrown,Screen.lightBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown,Screen.darkBrown});
+        } else if(type == Screen.leaves) {
+            return(new Color[]{Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen});
+        } else if(type == Screen.sand) {
+            return(new Color[]{Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige});
+        } else if(type == Screen.gravel) {
+            return(new Color[]{Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray});
+        } else if(type == Screen.water) {
+            normal = false;
+            return(new Color[]{Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue});
+        } else if(type == Screen.bedrock) {
+            return(new Color[]{Screen.black,Screen.black,Screen.black,Screen.black,Screen.black,Screen.black});
+        } else {
+            return(new Color[]{});
+        }
+    }
+    
+    double[] getAttributes() {
+        return new double[]{x,y,z,width,length,height};
+    }
+    
+    double[] getCoords() {
+        return new double[]{x,y,z};
+    }
+    
+    double[] getAdjacentCube(int face) {
+        if(face == 0) {
+            return new double[]{x, y, z - height};
+        } else if(face == 1) {
+            return new double[]{x, y, z + height};
+        } else if(face == 2) {
+            return new double[]{x, y + length, z};
+        } else if(face == 3) {
+            return new double[]{x - width, y, z};
+        } else if(face == 4) {
+            return new double[]{x, y - length, z};
+        } else if(face == 5) {
+            return new double[]{x + width, y, z};
+        } else {
+            return new double[]{0,0,0};
+        }
+    }
+    
+    int getID() {
+        return id;
+    }
+    
+    double getDist(double x, double y, double z) {
+        return Math.sqrt(Math.pow(this.x - x,2) + Math.pow(this.y - y,2) + Math.pow(this.z - z,2));
+    }
+    
+    /*void softAdjacencyCheck() {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            if(Screen.Cubes[i] != null) {
+                for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
+                    for(int f = 0; f < 6; f ++) {
+                        if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                            getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                            ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
+                            polysToDraw[f] = false;
+                            updatePoly();
+                        }
+                    }
                 }
             }
         }
-        for(int i = 0; i < Cubes.length; i ++) {
-            if(Cubes[i] != null) {
-                for(int j = 0; j < Cubes[i].size(); j ++) {
-                    Cubes[i].get(j).updatePoly();
+    }*/
+    
+    void softAdjacencyCheck() {
+        int chunk = Screen.getChunkNumberIn((int)x,(int)y);
+        int sideLength = Screen.size / Screen.chunkSize;
+        int[] adjacentChunks = new int[5]; //left (chunk - 1) right (chunk + 1) above (chunk + sideLength) below (chunk - sideLength)
+        if(chunk % sideLength != 0) {
+            adjacentChunks[0] = chunk - 1;
+        } else {
+            adjacentChunks[0] = -1;
+        }
+        if(chunk % sideLength != sideLength - 1) {
+            adjacentChunks[2] = chunk - 1;
+        } else {
+            adjacentChunks[1] = -1;
+        }
+        if(chunk >= sideLength) {
+            adjacentChunks[2] = chunk - sideLength;
+        } else {
+            adjacentChunks[2] = -1;
+        }
+        if(chunk < Math.pow(sideLength,2) - sideLength) {
+            adjacentChunks[3] = chunk + sideLength;
+        } else {
+            adjacentChunks[3] = -1;
+        }
+        adjacentChunks[4] = chunk;
+        
+        System.out.println("chunk = "+chunk);
+        
+        for(int i = 0; i < 5; i ++) {
+            System.out.println(adjacentChunks[i]);
+        }
+        
+        for(int f = 0; f < 6; f ++) {
+            System.out.println("f" + f);
+            for(int j = 0; j < adjacentChunks.length; j ++) {
+                if(adjacentChunks[j] != -1) {
+                    for(int i = 0; i < Screen.Cubes[adjacentChunks[j]].size(); i ++) {
+                        if(Screen.Cubes[adjacentChunks[j]].get(i).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[adjacentChunks[j]].get(i).getCoords()[1] == getAdjacentCube(f)[1]
+                            && Screen.Cubes[adjacentChunks[j]].get(i).getCoords()[2] == getAdjacentCube(f)[2]){
+                                polysToDraw[f] = false;
+                                updatePoly();
+                        }
+                    }
                 }
             }
         }
     }
     
-    public void drawChunk(int i) {
-        if(!Chunks[i].isAlreadyInMap()) {
-            Cubes[i] = Chunks[i].getCubeArray();
-            Cubes[i].get(0).chunkOnlyAdjacencyCheck(i);
-            for(int j = 0; j < Cubes[i].size(); j ++) {
-                Cubes[i].get(j).updatePoly();
-            }
-            Chunks[i].setAlreadyInMap(true);
-        }
-    }
-    
-    public void undrawChunk(int i) {
-        if(Chunks[i].isAlreadyInMap()) {
-            for(int j = 0; j < Cubes[i].size(); j ++) {
-                Cubes[i].get(j).removeCubeInChunk();
-            }
-            Chunks[i].setAlreadyInMap(false);
-        }
-    }
-    
-    public void determineChunksToDraw(double distance) {
-        for(int i = 0; i < Chunks.length; i ++) {
-            if(Chunks[i].getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= distance) {
-                drawChunk(i);
-            } else {
-                undrawChunk(i);
+    void chunkOnlyAdjacencyCheck(int i) {
+        if(Screen.Cubes[i] != null) {
+            for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
+                for(int f = 0; f < 6; f ++) {
+                    if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                        getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                        ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
+                        polysToDraw[f] = false;
+                        updatePoly();
+                    }
+                }
             }
         }
     }
     
-    private int[] getChunkCoordsIn(int x, int y) {
-        return new int[]{x / chunkSize,y / chunkSize};
+    void hardAdjacencyCheck() {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            if(Screen.Cubes[i] != null) {
+                for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
+                    for(int f = 0; f < 6; f ++) {
+                        if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                            getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                            ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
+                            polysToDraw[f] = false;
+                            updatePoly();
+                            Screen.Cubes[i].get(j).softAdjacencyCheck();
+                        }
+                    }
+                }
+            }
+        }
     }
     
-    private int getChunkNumberIn(int x, int y) {
-        for(int i = 0; i < Chunks.length; i ++) {
-            if(Chunks[i].getX() == x / chunkSize && Chunks[i].getY() == y / chunkSize) {
-                return i;
-            }
+    void setRotAdd()
+    {
+        angle = new double[4];
+        
+        double xdif = - width/2 + 0.00001;
+        double ydif = - length/2 + 0.00001;
+        
+        angle[0] = Math.atan(ydif/xdif);
+        
+        if(xdif<0)
+            angle[0] += Math.PI;
+        
+        xdif = width/2 + 0.00001;
+        ydif = - length/2 + 0.00001;
+        
+        angle[1] = Math.atan(ydif/xdif);
+        
+        if(xdif<0)
+            angle[1] += Math.PI;
+            
+        xdif = width/2 + 0.00001;
+        ydif = length/2 + 0.00001;
+        
+        angle[2] = Math.atan(ydif/xdif);
+        
+        if(xdif<0)
+            angle[2] += Math.PI;
+        
+        xdif = - width/2 + 0.00001;
+        ydif = length/2 + 0.00001;
+        
+        angle[3] = Math.atan(ydif/xdif);
+        
+        if(xdif<0)
+            angle[3] += Math.PI;    
+        
+        RotAdd[0] = angle[0] + 0.25 * Math.PI;
+        RotAdd[1] =    angle[1] + 0.25 * Math.PI;
+        RotAdd[2] = angle[2] + 0.25 * Math.PI;
+        RotAdd[3] = angle[3] + 0.25 * Math.PI;
+    }
+    
+    void updateDirection(double toX, double toY)
+    {
+        double xdif = toX - (x + width/2) + 0.00001;
+        double ydif = toY - (y + length/2) + 0.00001;
+        
+        double anglet = Math.atan(ydif/xdif) + 0.75 * Math.PI;
+
+        if(xdif<0)
+            anglet += Math.PI;
+
+        rotation = anglet;
+        updatePoly();        
+    }
+
+    void updatePoly()
+    {
+        for(int i = 0; i < 6; i ++) {
+            Screen.DPolygons.remove(Polys[i]);
+        }
+        
+        double radius = Math.sqrt(width*width + length*length);
+        
+        x1 = x+width*0.5+radius*0.5*Math.cos(rotation + RotAdd[0]);
+        x2 = x+width*0.5+radius*0.5*Math.cos(rotation + RotAdd[1]);
+        x3 = x+width*0.5+radius*0.5*Math.cos(rotation + RotAdd[2]);
+        x4 = x+width*0.5+radius*0.5*Math.cos(rotation + RotAdd[3]);
+           
+        y1 = y+length*0.5+radius*0.5*Math.sin(rotation + RotAdd[0]);
+        y2 = y+length*0.5+radius*0.5*Math.sin(rotation + RotAdd[1]);
+        y3 = y+length*0.5+radius*0.5*Math.sin(rotation + RotAdd[2]);
+        y4 = y+length*0.5+radius*0.5*Math.sin(rotation + RotAdd[3]);
+   
+        if(polysToDraw[0] == true && Polys[0] != null) {
+            Polys[0].setX(new double[]{x1, x2, x3, x4});
+            Polys[0].setY(new double[]{y1, y2, y3, y4});;
+            Polys[0].setZ(new double[]{z, z, z, z});
+        } else  if(polysToDraw[0] == true && Polys[0] == null){
+            Polys[0] = new DPolygon(new double[]{x1, x2, x3, x4}, new double[]{y1, y2, y3, y4}, new double[]{z, z, z, z}, c[0], normal, 0, id);
+        } else {
+            Polys[0] = null;
+        }
+        if(polysToDraw[1] == true && Polys[1] != null) {
+            Polys[1].setX(new double[]{x4, x3, x2, x1});
+            Polys[1].setY(new double[]{y4, y3, y2, y1});
+            Polys[1].setZ(new double[]{z+height, z+height, z+height, z+height});
+        } else if(polysToDraw[1] == true && Polys[1] == null){
+            Polys[1] = new DPolygon(new double[]{x4, x3, x2, x1}, new double[]{y4, y3, y2, y1}, new double[]{z+height, z+height, z+height, z+height}, c[1], normal, 1, id);
+        } else {    
+            Polys[1] = null;
         } 
-        return -1;
-    }
-    
-    private boolean withinRange(double val, double min, double max) {
-        return val <= max && val >= min;
-    }
-    
-    private boolean willCollide(double[] attrs) {
-        if(withinRange(attrs[0],0,size) && withinRange(attrs[1],0,size) && withinRange(attrs[2],0,worldHeight)) { //checking if the coordinate is within the world limits
-            double x = attrs[0] + (attrs[3] / 2);
-            double y = attrs[1] + (attrs[4] / 2);
-            double z = attrs[2] + (attrs[5] / 2);
-            double px = ViewFrom[0];
-            double py = ViewFrom[1];
-            double pz = ViewFrom[2];
-            double xDiff = Math.abs(x - px);
-            double yDiff = Math.abs(y - py);
-            double zDiff = Math.abs(z - pz);
-            if(zDiff <= heightTol + 0.5 - 0.005 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) { //checking if the coordinate is inside of the player
-                return(true);
-            } else {
-                return false;
-            }
+        if(polysToDraw[2] == true && Polys[2] != null) {
+            Polys[2].setX(new double[]{x1, x1, x2, x2});
+            Polys[2].setY(new double[]{y1, y1, y2, y2});
+            Polys[2].setZ(new double[]{z, z+height, z+height, z});
+        } else if(polysToDraw[2] == true && Polys[2] == null){
+            Polys[2] = new DPolygon(new double[]{x1, x1, x2, x2}, new double[]{y1, y1, y2, y2}, new double[]{z, z+height, z+height, z}, c[2], normal, 2, id);
+        } else {
+            Polys[2] = null;
         }
-        return true;
-    }
-    
-    public void paintComponent(Graphics g)
-    {
-        //Clear screen and draw background color
-        time = System.currentTimeMillis();
-        daylightCycle = 0.8 * Math.pow(Math.sin((double)time / 360000.0),2) + 0.2;
-        Color fillColor = new Color((int)((double)bgColor.getRed() * daylightCycle), (int)((double)bgColor.getGreen() * daylightCycle), (int)((double)bgColor.getBlue() * daylightCycle));
-        g.setColor(fillColor);
-        g.fillRect(0, 0, (int)DDDTutorial.ScreenSize.getWidth(), (int)DDDTutorial.ScreenSize.getHeight());
-
-        CameraMovement();
-        
-        determineChunksToDraw(4);
-        
-        //Calculated all that is general for this camera position
-        Calculator.setPredeterminedInfo();
-
-        ControlSunAndLight();
-
-        //Updates each polygon for this camera position
-        for(int i = 0; i < DPolygons.size(); i ++) {
-            DPolygons.get(i).updatePolygon();
+        if(polysToDraw[3] == true && Polys[3] != null) {
+            Polys[3].setX(new double[]{x2, x2, x3, x3});
+            Polys[3].setY(new double[]{y2, y2, y3, y3});
+            Polys[3].setZ(new double[]{z, z+height, z+height, z});
+        } else if(polysToDraw[3] == true && Polys[3] == null){
+            Polys[3] = new DPolygon(new double[]{x2, x2, x3, x3}, new double[]{y2, y2, y3, y3},  new double[]{z, z+height, z+height, z}, c[3], normal, 3, id);
+        } else {
+            Polys[3] = null;
         }
-
-        //Set drawing order so closest polygons gets drawn last
-        setOrder();
-            
-        //Set the polygon that the mouse is currently over
-        setPolygonOver();
-            
-        //draw polygons in the Order that is set by the 'setOrder' function
-        
-        for(int i = 0; i < NewOrder.length; i++) {
-            DPolygons.get(NewOrder[i]).getDrawablePolygon().drawPolygon(g);
+        if(polysToDraw[4] == true && Polys[4] != null) {
+            Polys[4].setX(new double[]{x3, x3, x4, x4});
+            Polys[4].setY(new double[]{y3, y3, y4, y4});
+            Polys[4].setZ(new double[]{z, z+height, z+height, z});
+        } else if(polysToDraw[4] == true && Polys[4] == null){
+            Polys[4] = new DPolygon(new double[]{x3, x3, x4, x4}, new double[]{y3, y3, y4, y4},  new double[]{z, z+height, z+height, z}, c[4], normal, 4, id);
+        } else {
+            Polys[4] = null;
         }
-        //draw the cross in the center of the screen
-        drawMouseAim(g);            
+        if(polysToDraw[5] == true && Polys[5] != null) {
+            Polys[5].setX(new double[]{x4, x4, x1, x1});
+            Polys[5].setY(new double[]{y4, y4, y1, y1});
+            Polys[5].setZ(new double[]{z, z+height, z+height, z});
+        } else if(polysToDraw[5] == true && Polys[5] == null){
+            Polys[5] = new DPolygon(new double[]{x4, x4, x1, x1}, new double[]{y4, y4, y1, y1},  new double[]{z, z+height, z+height, z}, c[5], normal, 5, id);
+        } else {
+            Polys[5] = null;
+        }
         
-        //FPS display
-        g.drawString("FPS: " + (int)drawFPS, 40, 40);
-        
-        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
-        
-        g.drawImage(hotbar,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2, (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight(), null);
-        
-        //0 at coordinate 112,28 -> increments of 58 pixels
-        
-        g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 112 + 8,(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
-        
-        SleepAndRefresh();
-    }
-    
-    void setOrder()
-    {
-        double[] k = new double[DPolygons.size()];
-        NewOrder = new int[DPolygons.size()];
-        
-        for(int i=0; i<DPolygons.size(); i++)
+        for(int i = 0; i < 6; i++)
         {
-            k[i] = DPolygons.get(i).getAvgDist();
-            NewOrder[i] = i;
-        }
-        
-        double temp;
-        int tempr;        
-        for (int a = 0; a < k.length-1; a++) {
-            for (int b = 0; b < k.length-1; b++) {
-                if(k[b] < k[b + 1])
-                {
-                    temp = k[b];
-                    tempr = NewOrder[b];
-                    NewOrder[b] = NewOrder[b + 1];
-                    k[b] = k[b + 1];
-                       
-                    NewOrder[b + 1] = tempr;
-                    k[b + 1] = temp;
-                }
+            if(Polys[i] != null) {
+                Screen.DPolygons.add(Polys[i]);
             }
         }
     }
     
-    void drawInventory() {
-        /*if(Keys[6]) {
-            inventory.draw(g);
-        }*/
-    }
-        
-    void invisibleMouse()
-    {
-         Toolkit toolkit = Toolkit.getDefaultToolkit();
-         BufferedImage cursorImage = new BufferedImage(1, 1, BufferedImage.TRANSLUCENT); 
-         Cursor invisibleCursor = toolkit.createCustomCursor(cursorImage, new Point(0,0), "InvisibleCursor");        
-         setCursor(invisibleCursor);
-    }
-    
-    void drawMouseAim(Graphics g)
-    {
-        g.setColor(Color.black);
-        g.drawLine((int)(DDDTutorial.ScreenSize.getWidth()/2 - aimSight), (int)(DDDTutorial.ScreenSize.getHeight()/2), (int)(DDDTutorial.ScreenSize.getWidth()/2 + aimSight), (int)(DDDTutorial.ScreenSize.getHeight()/2));
-        g.drawLine((int)(DDDTutorial.ScreenSize.getWidth()/2), (int)(DDDTutorial.ScreenSize.getHeight()/2 - aimSight), (int)(DDDTutorial.ScreenSize.getWidth()/2), (int)(DDDTutorial.ScreenSize.getHeight()/2 + aimSight));            
-    }
-
-    void SleepAndRefresh()
-    {
-        long timeSLU = (long) (System.currentTimeMillis() - lastRefresh); 
-
-        checks ++;            
-        if(checks >= 15)
-        {
-            drawFPS = checks/((System.currentTimeMillis() - lastFPSCheck)/1000.0);
-            lastFPSCheck = System.currentTimeMillis();
-            checks = 0;
-        }
-        
-        if(timeSLU < 1000.0/maxFPS)
-        {
-            try {
-                Thread.sleep((long) (1000.0/maxFPS - timeSLU));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }    
-        }
-        
-        lastRefresh = System.currentTimeMillis();
-        
-        repaint();
-    }
-    
-    void ControlSunAndLight()
-    {
-        double mapSize = 2500;
-        LightDir[0] = mapSize/2 - (mapSize/2 + Math.cos(SunPos) * mapSize * 10);
-        LightDir[1] = mapSize/2 - (mapSize/2 + Math.sin(SunPos) * mapSize * 10);
-        LightDir[2] = -200;
-    }
-    
-    void CameraMovement()
-    {
-        Vector ViewVector = new Vector(ViewTo[0] - ViewFrom[0], ViewTo[1] - ViewFrom[1], ViewTo[2] - ViewFrom[2]);
-        double xMove = 0, yMove = 0, zMove = 0;
-        double adjMovementFactor = (60.0 * movementFactor) / Calculator.clamp(drawFPS,15,maxFPS);
-        
-        Vector VerticalVector = new Vector (0, 0, 1);
-        Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
-        
-        ViewFrom[2] += zVel;
-        zVel -= gravity;
-        zVel = Calculator.clamp(zVel,-15,jumpVel);
-        
-        if(Keys[0])
-        {
-            xMove += (adjMovementFactor * ViewVector.getX());
-            yMove += (adjMovementFactor * ViewVector.getY());
-        }
-
-        if(Keys[2])
-        {
-            xMove -= (adjMovementFactor * ViewVector.getX());
-            yMove -= (adjMovementFactor * ViewVector.getY());
-        }
-            
-        if(Keys[1])
-        {
-            xMove += (adjMovementFactor * SideViewVector.getX());
-            yMove += (adjMovementFactor * SideViewVector.getY());
-        }
-
-        if(Keys[3])
-        {
-            xMove -= (adjMovementFactor * SideViewVector.getX());
-            yMove -= (adjMovementFactor * SideViewVector.getY());
-        }
-        
-        Vector MoveVector = new Vector(xMove, yMove, zMove);
-        MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
-        
-        for(int i = 0; i < Cubes.length; i ++) {
-            if(Cubes[i] != null) {
-                for(int j = 0; j < Cubes[i].size(); j ++) {
-                    if(Cubes[i].get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Cubes[i].get(j).isNormal()) {
-                        double[] attrs = Cubes[i].get(j).getAttributes();
-                        double x = attrs[0] + (attrs[3] / 2);
-                        double y = attrs[1] + (attrs[4] / 2);
-                        double z = attrs[2] + (attrs[5] / 2);
-                        double px = ViewFrom[0];
-                        double py = ViewFrom[1];
-                        double pz = ViewFrom[2];
-                        double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
-                        double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
-                        double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
-                        double hzDiff = Math.abs(z + 0.5 - pz);
-                        if(zDiff <= heightTol + 0.5 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) {
-                            if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
-                                ViewFrom[1] = y + sideTol;
-                            } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
-                                ViewFrom[1] = y - sideTol;
-                            } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
-                                ViewFrom[0] = x + sideTol;
-                            } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
-                                ViewFrom[0] = x - sideTol;
-                            } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
-                                ViewFrom[2] = z + heightTol + 0.5;
-                                canJump = true;
-                                zVel = 0;
-                            } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < sideTol - 0.01 && yDiff < sideTol - 0.01) {
-                                ViewFrom[2] = z - heightTol + 0.5;
-                            }
-                        }
-                    }
-                    updateView();
-                }
-            }
-        }
-    }
-
-    void MoveTo(double x, double y, double z)
-    {
-        ViewFrom[0] = x;
-        ViewFrom[1] = y;
-        ViewFrom[2] = z;
-    }
-
-    void setPolygonOver()
-    {
-        PolygonOver = null;
-        selectedCube = -1;
-        for(int i = NewOrder.length-1; i >= 0; i --) {
-            if(DPolygons.get(NewOrder[i]).getDist() <= 6) {
-                if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && DPolygons.get(NewOrder[i]).isNormal())
-                {
-                    PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
-                    selectedCube = DPolygons.get(NewOrder[i]).getID();
-                    selectedFace = DPolygons.get(NewOrder[i]).getSide();
-                    break;
-                }
-            }
-        }
-    }
-
-    void MouseMovement(double NewMouseX, double NewMouseY)
-    {        
-        double difX = (NewMouseX - DDDTutorial.ScreenSize.getWidth()/2);
-        double difY = (NewMouseY - DDDTutorial.ScreenSize.getHeight()/2);
-        difY *= 6 - Math.abs(VertLook) * 5;
-        VertLook -= difY  / VertRotSpeed;
-        HorLook += difX / HorRotSpeed;
-        
-        VertLook = Calculator.clamp(VertLook,-0.99999,0.99999);
-        
-        updateView();
-    }
-    
-    void updateView()
-    {
-        double r = Math.sqrt(1 - (VertLook * VertLook));
-        ViewTo[0] = ViewFrom[0] + r * Math.cos(HorLook);
-        ViewTo[1] = ViewFrom[1] + r * Math.sin(HorLook);        
-        ViewTo[2] = ViewFrom[2] + VertLook;
-    }
-    
-    void CenterMouse() 
-    {
-        try {
-            r = new Robot();
-            r.mouseMove((int)DDDTutorial.ScreenSize.getWidth()/2, (int)DDDTutorial.ScreenSize.getHeight()/2);
-        } catch (AWTException e) {
-            e.printStackTrace();
+    void changeAdjacentPoly(int face, boolean state) {
+        if(face == 0) {
+            polysToDraw[1] = state;
+        } else if(face == 1) {
+            polysToDraw[0] = state;
+        } else if(face == 2) {
+            polysToDraw[3] = state;
+        } else if(face == 3) {
+            polysToDraw[2] = state;
+        } else if(face == 4) {
+            polysToDraw[5] = state;
+        } else if(face == 5) {
+            polysToDraw[4] = state;
         }
     }
     
-    public void keyPressed(KeyEvent e) {
-        if(e.getKeyCode() == KeyEvent.VK_W)
-            Keys[0] = true;
-        if(e.getKeyCode() == KeyEvent.VK_A)
-            Keys[1] = true;
-        if(e.getKeyCode() == KeyEvent.VK_S)
-            Keys[2] = true;
-        if(e.getKeyCode() == KeyEvent.VK_D)
-            Keys[3] = true;
-        if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-            Keys[4] = true;
-            if(canJump) {
-                zVel = jumpVel;
-                ViewFrom[2] += 0.01;
-                canJump = false;
-            }
-        }
-        if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
-            Keys[5] = true;
-        }
-        if(e.getKeyCode() == KeyEvent.VK_E) {
-            Keys[6] = true;
-        }
-        if(e.getKeyCode() == KeyEvent.VK_O)
-            OutLines = !OutLines;
-        if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
-            System.exit(0);
-    }
-
-    public void keyReleased(KeyEvent e) {
-        if(e.getKeyCode() == KeyEvent.VK_W)
-            Keys[0] = false;
-        if(e.getKeyCode() == KeyEvent.VK_A)
-            Keys[1] = false;
-        if(e.getKeyCode() == KeyEvent.VK_S)
-            Keys[2] = false;
-        if(e.getKeyCode() == KeyEvent.VK_D)
-            Keys[3] = false;
-        if(e.getKeyCode() == KeyEvent.VK_SPACE)
-            Keys[4] = false;
-        if(e.getKeyCode() == KeyEvent.VK_SHIFT)
-            Keys[5] = false;
-    }
-
-    public void keyTyped(KeyEvent e) {
-    
-    }
-
-    public void mouseDragged(MouseEvent m) {
-        MouseMovement(m.getX(), m.getY());
-        MouseX = m.getX();
-        MouseY = m.getY();
-        CenterMouse();
+    void changePoly(int face, boolean state) {
+        polysToDraw[face] = state;
     }
     
-    public void mouseMoved(MouseEvent m) {
-        MouseMovement(m.getX(), m.getY());
-        MouseX = m.getX();
-        MouseY = m.getY();
-        CenterMouse();
+    int getType() {
+        return type;
     }
     
-    public void mouseClicked(MouseEvent m) {
-    }
-
-    public void mouseEntered(MouseEvent m) {
-    }
-
-    public void mouseExited(MouseEvent m) {
-    }
-
-    public void mousePressed(MouseEvent m) {
-        if(m.getButton() == MouseEvent.BUTTON1) {
-            if(selectedCube != -1) {
-                for(int i = 0; i < Cubes.length; i ++) {
-                    for(int j = 0; j < Cubes[i].size(); j ++) {
-                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal() && !Cubes[i].get(j).isBedrock()) {
-                            Cubes[i].get(j).removeCube();
-                        }
-                    }
-                }
-            }
+    int getAdjacentPoly(int face) {
+        if(face == 0) {
+            return 1;
+        } else if(face == 1) {
+            return 0;
+        } else if(face == 2) {
+            return 3;
+        } else if(face == 3) {
+            return 2;
+        } else if(face == 4) {
+            return 5;
+        } else if(face == 5) {
+            return 4;
+        } else {
+            return -1;
         }
-        
-        if(m.getButton() == MouseEvent.BUTTON3) {
-            if(selectedCube != -1) {
-                for(int i = 0; i < Cubes.length; i ++) {
-                    for(int j = 0; j < Cubes[i].size(); j ++) {
-                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal()) {
-                            double[] coords = Cubes[i].get(j).getAdjacentCube(selectedFace);
-                            int chunkIn = getChunkNumberIn((int)coords[0],(int)coords[1]);
-                            if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                                Cubes[chunkIn].add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
-                                Cubes[chunkIn].get(Cubes[chunkIn].size() - 1).hardAdjacencyCheck();
-                            }
-                            break;
+    }
+    
+    boolean[] getPolysToDraw() {
+        return polysToDraw;
+    }
+    
+    boolean isNormal() {
+        return normal;
+    }
+    
+    boolean isBedrock() {
+        return type == Screen.bedrock;
+    }
+    
+    void changeAdjacentCubePoly(int face, boolean state) {
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            if(Screen.Cubes[i] != null) {
+                for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
+                    for(int f = 0; f < 6; f ++) {
+                        if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
+                            getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && Screen.Cubes[i].get(j).isNormal()) {
+                            Screen.Cubes[i].get(j).changeAdjacentPoly(face,state);
+                            Screen.Cubes[i].get(j).updatePoly();
                         }
                     }
                 }
@@ -631,11 +399,21 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         }
     }
 
-    public void mouseReleased(MouseEvent m) {
+    void removeCubeInChunk()
+    {
+        for(int i = 0; i < 6; i ++) {
+            Screen.DPolygons.remove(Polys[i]);
+        }
     }
-
-    public void mouseWheelMoved(MouseWheelEvent m) {
-        zoom -= 25 * m.getUnitsToScroll();
-        zoom = Calculator.clamp(zoom,MinZoom,MaxZoom);
+    
+    void removeCube()
+    {
+        for(int i = 0; i < 6; i ++) {
+            changeAdjacentCubePoly(i,true);
+            Screen.DPolygons.remove(Polys[i]);
+        }
+        for(int i = 0; i < Screen.Cubes.length; i ++) {
+            Screen.Cubes[i].remove(this);
+        }
     }
 }
