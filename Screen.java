@@ -23,9 +23,9 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //ArrayList of all the 3D polygons - each 3D polygon has a 2D 'PolygonObject' inside called 'DrawablePolygon'
     static ArrayList<DPolygon> DPolygons = new ArrayList<DPolygon>();
     
-    static ArrayList<ArrayList<Cube>> Cubes = new ArrayList<ArrayList<Cube>>();
+    static ArrayList<Cube>[] Cubes;
     
-    static ArrayList<Chunk> Chunks = new ArrayList<Chunk>();
+    static Chunk[] Chunks;
     
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
@@ -59,7 +59,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    final int size = 40;
+    final int size = 32;
     final int chunkSize = 4;
     final int worldHeight = 32;
     
@@ -114,15 +114,17 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         final int waterDepth = 12;
         final int treeCount = 8;
         
+        Chunks = new Chunk[(size / chunkSize) * (size / chunkSize)];
+        Cubes = new ArrayList[Chunks.length];
+        
         int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
         for(int x = 0; x < size / chunkSize; x ++) {
             for(int y = 0; y < size / chunkSize; y ++) {
-                Chunks.add(new Chunk(map,chunkSize,worldHeight,x,y));
-                //Chunks.get(Chunks.size() - 1).setAlreadyInMap(true);
+                Chunks[x + (y * size / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
             }
         }
         
-        for(int i = 0; i < Chunks.size(); i ++) {
+        for(int i = 0; i < Chunks.length; i ++) {
             drawChunk(i);
         }
     }
@@ -144,35 +146,35 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
     
     public void refreshCubes() {
-        for(int i = 0; i < Cubes.size(); i ++) {
-            for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                Cubes.get(i).get(j).softAdjacencyCheck();
+        for(int i = 0; i < Cubes.length; i ++) {
+            for(int j = 0; j < Cubes[i].size(); j ++) {
+                Cubes[i].get(j).softAdjacencyCheck();
             }
         }
-        for(int i = 0; i < Cubes.size(); i ++) {
-            for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                Cubes.get(i).get(j).updatePoly();
+        for(int i = 0; i < Cubes.length; i ++) {
+            for(int j = 0; j < Cubes[i].size(); j ++) {
+                Cubes[i].get(j).updatePoly();
             }
         }
     }
     
     public void drawChunk(int i) {//int chunkX, int chunkY) {
-        if(!Chunks.get(i).isAlreadyInMap()) {
-            Cubes.add(Chunks.get(i).getCubeArray());
-            Cubes.get(Cubes.size() - 1).get(0).chunkOnlyAdjacencyCheck(i);
-            for(int j = 0; j < Cubes.get(Cubes.size() - 1).size(); j ++) {
-                Cubes.get(Cubes.size() - 1).get(j).updatePoly();
+        if(!Chunks[i].isAlreadyInMap()) {
+            Cubes[i] = Chunks[i].getCubeArray();
+            Cubes[i].get(0).chunkOnlyAdjacencyCheck(i);
+            for(int j = 0; j < Cubes[i].size(); j ++) {
+                Cubes[i].get(j).updatePoly();
             }
-            Chunks.get(i).setAlreadyInMap(true);
+            Chunks[i].setAlreadyInMap(true);
         }
     }
     
     public void undrawChunk(int i) {
-        if(Chunks.get(i).isAlreadyInMap()) {
-            for(int j = 0; j < Cubes.get(Cubes.indexOf(Chunks.get(i).getCubeArray())).size(); j ++) {
-                Cubes.get(i).get(j).removeCubeInChunk();
+        if(Chunks[i].isAlreadyInMap()) {
+            for(int j = 0; j < Cubes[i].size(); j ++) {
+                Cubes[i].get(j).removeCubeInChunk();
             }
-            Chunks.get(i).setAlreadyInMap(false);
+            Chunks[i].setAlreadyInMap(false);
         }
     }
     
@@ -181,8 +183,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
     
     private int getChunkNumberIn(int x, int y) {
-        for(int i = 0; i < Chunks.size(); i ++) {
-            if(Chunks.get(i).getX() == x / chunkSize && Chunks.get(i).getY() == y / chunkSize) {
+        for(int i = 0; i < Chunks.length; i ++) {
+            if(Chunks[i].getX() == x / chunkSize && Chunks[i].getY() == y / chunkSize) {
                 return i;
             }
         } 
@@ -216,8 +218,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
 
         CameraMovement();
         
-        for(int i = 0; i < Chunks.size(); i ++) {
-            if(Chunks.get(i).getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= 4) {
+        for(int i = 0; i < Chunks.length; i ++) {
+            if(Chunks[i].getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= 4) {
                 drawChunk(i);
             } else {
                 undrawChunk(i);
@@ -388,10 +390,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         Vector MoveVector = new Vector(xMove, yMove, zMove);
         MoveTo(ViewFrom[0] + MoveVector.getX() * adjMovementFactor, ViewFrom[1] + MoveVector.getY() * adjMovementFactor, ViewFrom[2] + MoveVector.getZ() * adjMovementFactor);
         
-        for(int i = 0; i < Cubes.size(); i ++) {
-            for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                if(Cubes.get(i).get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Cubes.get(i).get(j).isNormal()) {
-                    double[] attrs = Cubes.get(i).get(j).getAttributes();
+        for(int i = 0; i < Cubes.length; i ++) {
+            for(int j = 0; j < Cubes[i].size(); j ++) {
+                if(Cubes[i].get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Cubes[i].get(j).isNormal()) {
+                    double[] attrs = Cubes[i].get(j).getAttributes();
                     double x = attrs[0] + (attrs[3] / 2);
                     double y = attrs[1] + (attrs[4] / 2);
                     double z = attrs[2] + (attrs[5] / 2);
@@ -555,10 +557,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     public void mousePressed(MouseEvent m) {
         if(m.getButton() == MouseEvent.BUTTON1) {
             if(selectedCube != -1) {
-                for(int i = 0; i < Cubes.size(); i ++) {
-                    for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                        if(Cubes.get(i).get(j).getID() == selectedCube && Cubes.get(i).get(j).isNormal()) {
-                            Cubes.get(i).get(j).removeCube();
+                for(int i = 0; i < Cubes.length; i ++) {
+                    for(int j = 0; j < Cubes[i].size(); j ++) {
+                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal()) {
+                            Cubes[i].get(j).removeCube();
                         }
                     }
                 }
@@ -567,13 +569,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         if(m.getButton() == MouseEvent.BUTTON3) {
             if(selectedCube != -1) {
-                for(int i = 0; i < Cubes.size(); i ++) {
-                    for(int j = 0; j < Cubes.get(i).size(); j ++) {
-                        if(Cubes.get(i).get(j).getID() == selectedCube && Cubes.get(i).get(j).isNormal()) {
-                            double[] coords = Cubes.get(i).get(j).getAdjacentCube(selectedFace);
+                for(int i = 0; i < Cubes.length; i ++) {
+                    for(int j = 0; j < Cubes[i].size(); j ++) {
+                        if(Cubes[i].get(j).getID() == selectedCube && Cubes[i].get(j).isNormal()) {
+                            double[] coords = Cubes[i].get(j).getAdjacentCube(selectedFace);
+                            int chunkIn = getChunkNumberIn((int)coords[0],(int)coords[1]);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
-                                Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
-                                Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).get(Cubes.get(getChunkNumberIn((int)coords[0],(int)coords[1])).size() - 1).hardAdjacencyCheck();
+                                Cubes[chunkIn].add(new Cube(coords[0],coords[1],coords[2],1,1,1,0));
+                                Cubes[chunkIn].get(Cubes[chunkIn].size() - 1).hardAdjacencyCheck();
                             }
                             break;
                         }
