@@ -65,7 +65,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    static final int worldSize = 96;
+    static final int worldSize = 64;
     static final int chunkSize = 8;
     static final int worldHeight = 32;
     static final double renderDistance = 16;
@@ -84,7 +84,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
      * Water is ID 9
      */
     
-    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","gravel","bedrock"};
+    static String[] colorNames = new String[]{"stone","cobblestone","dirt","grass","planks","logs","leaves","sand","glass","bedrock"};
     
     static final int stone = 0;
     static final int cobblestone = 1;
@@ -94,7 +94,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static final int logs = 5;
     static final int leaves = 6;
     static final int sand = 7;
-    static final int gravel = 8;
+    static final int glass = 8;
     static final int water = 9;
     static final int bedrock = 10;
     
@@ -104,12 +104,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     static Color black = new Color(20,20,20);
     static Color darkGray = new Color(65,65,65);
-    static Color midGray = new Color(80,80,80);
     static Color lightGray = new Color(100,100,100);
     static Color darkBrown = new Color(77,47,18);
     static Color midBrown = new Color(133,73,45);
     static Color lightBrown = new Color(175,125,77);
     static Color beige = new Color(232,214,158);
+    static Color translucent = new Color(200, 200, 230, 40);
     
     static Color bgColor = new Color(50,150,255);
     
@@ -123,12 +123,13 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         final int octaveCount = 4;
         final float persistence = 0.17f;
+        final float treeDensity = 0.03f;
         final int minHeight = 6;
         final int maxHeight = 17;
         final int minDirtDepth = 2;
         final int maxDirtDepth = 3;
-        final int waterDepth = 10;
-        final int treeCount = 8;
+        final int waterDepth = 9;
+        final int treeCount = (int)(treeDensity * Math.pow(worldSize, 2));
         
         Chunks = new Chunk[(worldSize / chunkSize) * (worldSize / chunkSize)];
         
@@ -138,7 +139,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int x = 0; x < worldSize / chunkSize; x ++) {
             for(int y = 0; y < worldSize / chunkSize; y ++) {
                 Chunks[x + (y * worldSize / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
-                System.out.println("Chunk " + (x + (y * worldSize / chunkSize)) + " initialized");
             }
         }
         
@@ -187,7 +187,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     Chunks[i].getCubeArray().get(j).softAdjacencyCheck();
                 }
             }
-            System.out.println(100 * (double)(i + 1) / Chunks.length);
+            System.out.println(100 * (double)(i + 1) / Chunks.length + "%");
         }
         System.out.println("Done checking adjacencies. Finally updating polygons.");
         for(int i = 0; i < Chunks.length; i ++) {
@@ -196,7 +196,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                     Chunks[i].getCubeArray().get(j).updatePoly();
                 }
             }
-            System.out.println(100 * (double)(i + 1) / Chunks.length);
+            System.out.println(100 * (double)(i + 1) / Chunks.length + "%");
         }
         
         System.out.println("Done!");
@@ -223,7 +223,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     public void determineChunksToDraw() {
         for(int i = 0; i < Chunks.length; i ++) {
-            if(Chunks[i].getDist(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= renderDistanceInChunks) {
+            if(Chunks[i].getDistFromCenter(ViewFrom[0] / (double)chunkSize, ViewFrom[1] / (double)chunkSize) <= renderDistanceInChunks) {
                 drawChunk(i);
             } else {
                 undrawChunk(i);
@@ -474,6 +474,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 }
             }
         }
+        
     }
 
     void MoveTo(double x, double y, double z)
