@@ -26,8 +26,16 @@ public class Chunk {
         }
     }
     
-    public void setCube(int x, int y, int z, int cubeType) {
+    public void addCube(int x, int y, int z, int cubeType) {
         cubeTypes[x][y][z] = cubeType;
+    }
+    
+    public void addCube(Cube cube) {
+        cubes.add(cube);
+    }
+    
+    public void removeCube(Cube cube) {
+        cubes.remove(cube);
     }
     
     public boolean isAlreadyInMap() {
@@ -48,6 +56,10 @@ public class Chunk {
     
     public double getDist(double x, double y) {
         return(Math.sqrt(Math.pow(x - this.x,2) + Math.pow(y - this.y,2)));
+    }
+    
+    public double getDistFromCenter(double x, double y) {
+        return(Math.sqrt(Math.pow(x - (this.x + 0.5),2) + Math.pow(y - (this.y + 0.5), 2)));
     }
     
     public int[][][] getChunk() {
