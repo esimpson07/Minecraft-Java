@@ -129,7 +129,6 @@ public class Cube {
                             get(j).getCoords()[1] == getAdjacentCube(f)[1] && Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
                             ((Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).isWater() == isWater()) || isWater()) && Screen.Chunks[adjacentChunks[i]].getCubeArray().
                             get(j).isGlass() == isGlass()){
-                            System.out.println("softchecked true");
                             polysToDraw[f] = false;
                             updatePoly();
                         }
@@ -179,9 +178,7 @@ public class Cube {
                 for(int j = 0; j < Screen.Chunks[i].getCubeArray().size(); j ++) {
                     for(int f = 0; f < 6; f ++) {
                         if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == adjacentCubes[f][0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
-                            adjacentCubes[f][1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == adjacentCubes[f][2] && 
-                            ((Screen.Chunks[i].getCubeArray().get(j).isWater() == isWater()) || isWater()) && Screen.Chunks[i].getCubeArray().
-                            get(j).isGlass() == isGlass()) {
+                            adjacentCubes[f][1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == adjacentCubes[f][2]) {
                             Screen.Chunks[i].getCubeArray().get(j).softAdjacencyCheck();
                         }
                     }
