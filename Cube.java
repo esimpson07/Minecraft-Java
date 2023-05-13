@@ -15,7 +15,7 @@ public class Cube {
     public Cube(double x, double y, double z, double width, double length, double height, int type)
     {
         this.id = (int)(Math.random() * 2147483647);
-        this.c = setValuesForType(type);
+        this.c = getColor(type);
         this.polysToDraw = new boolean[]{true,true,true,true,true,true};
         this.x = x;
         this.y = y;
@@ -26,12 +26,12 @@ public class Cube {
         this.length = length;
         this.height = height;
         
+        setValuesForType(type);
         setRotAdd();
         updatePoly();
     }
     
-    Color[] setValuesForType(int type) {
-        normal = true;
+    static Color[] getColor(int type) {
         if(type == Screen.stone) {
             return(new Color[]{Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray,Screen.lightGray});
         } else if(type == Screen.cobblestone) {
@@ -49,15 +49,22 @@ public class Cube {
         } else if(type == Screen.sand) {
             return(new Color[]{Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige});
         } else if(type == Screen.glass) {
-            normal = false;
             return(new Color[]{Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent});
         } else if(type == Screen.water) {
-            normal = false;
             return(new Color[]{Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue});
         } else if(type == Screen.bedrock) {
             return(new Color[]{Screen.black,Screen.black,Screen.black,Screen.black,Screen.black,Screen.black});
         } else {
             return(new Color[]{});
+        }
+        
+    }
+    
+    void setValuesForType(int type) {
+        if(type == Screen.glass || type == Screen.water) {
+            normal = false;
+        } else {
+            normal = true;
         }
     }
     
@@ -125,10 +132,10 @@ public class Cube {
             for(int f = 0; f < 6; f ++) {
                 if(adjacentChunks[i] != -1) {
                     for(int j = 0; j < Screen.Chunks[adjacentChunks[i]].getCubeArray().size(); j ++) {
-                        if(Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[adjacentChunks[i]].getCubeArray().
+                        if((Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[adjacentChunks[i]].getCubeArray().
                             get(j).getCoords()[1] == getAdjacentCube(f)[1] && Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
                             ((Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).isWater() == isWater()) || isWater()) && Screen.Chunks[adjacentChunks[i]].getCubeArray().
-                            get(j).isGlass() == isGlass()){
+                            get(j).isGlass() == isGlass())){
                             polysToDraw[f] = false;
                             updatePoly();
                         }
@@ -172,7 +179,7 @@ public class Cube {
         }
     }
     
-    void hardAdjacencyCheck(double[][] adjacentCubes) {
+    static void hardAdjacencyCheck(double[][] adjacentCubes) {
         for(int i = 0; i < Screen.Chunks.length; i ++) {
             if(Screen.Chunks[i] != null) {
                 for(int j = 0; j < Screen.Chunks[i].getCubeArray().size(); j ++) {
