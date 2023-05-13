@@ -632,7 +632,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                             }
                             Chunks[i].getCubeArray().get(j).removeCube();
                             Chunks[i].getCubeArray().get(0).hardAdjacencyCheck(adjacentCoords);
-                            System.out.println("checked");
                         }
                     }
                 }
