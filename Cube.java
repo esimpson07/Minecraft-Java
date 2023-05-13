@@ -48,8 +48,9 @@ public class Cube {
             return(new Color[]{Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen,Screen.darkGreen});
         } else if(type == Screen.sand) {
             return(new Color[]{Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige,Screen.beige});
-        } else if(type == Screen.gravel) {
-            return(new Color[]{Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray,Screen.midGray});
+        } else if(type == Screen.glass) {
+            normal = false;
+            return(new Color[]{Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent,Screen.translucent});
         } else if(type == Screen.water) {
             normal = false;
             return(new Color[]{Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue,Screen.waterBlue});
@@ -93,23 +94,6 @@ public class Cube {
     double getDist(double x, double y, double z) {
         return Math.sqrt(Math.pow(this.x - x,2) + Math.pow(this.y - y,2) + Math.pow(this.z - z,2));
     }
-    
-    /*void softAdjacencyCheck() {
-        for(int i = 0; i < Screen.Cubes.length; i ++) {
-            if(Screen.Cubes[i] != null) {
-                for(int j = 0; j < Screen.Cubes[i].size(); j ++) {
-                    for(int f = 0; f < 6; f ++) {
-                        if(Screen.Cubes[i].get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Cubes[i].get(j).getCoords()[1] == 
-                            getAdjacentCube(f)[1] && Screen.Cubes[i].get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                            ((Screen.Cubes[i].get(j).isNormal() == normal) || !normal)) {
-                            polysToDraw[f] = false;
-                            updatePoly();
-                        }
-                    }
-                }
-            }
-        }
-    }*/
     
     void softAdjacencyCheck() {
         int chunk = Screen.getChunkNumberIn((int)x,(int)y);
