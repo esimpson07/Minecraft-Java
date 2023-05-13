@@ -113,7 +113,7 @@ public class Cube {
     
     void softAdjacencyCheck() {
         int chunk = Screen.getChunkNumberIn((int)x,(int)y);
-        int sideLength = Screen.size / Screen.chunkSize;
+        int sideLength = Screen.worldSize / Screen.chunkSize;
         int[] adjacentChunks = new int[5]; //left (chunk - 1) right (chunk + 1) above (chunk + sideLength) below (chunk - sideLength)
         if(chunk % sideLength != 0 && (int)x % Screen.chunkSize == 0) {
             adjacentChunks[0] = chunk - 1;
