@@ -5,6 +5,7 @@ import java.util.Scanner;
  * For detailed info and implementation see: <a href="http://devmag.org.za/2009/04/25/perlin-noise/">Perlin-Noise</a>
  */
 public class NoiseGenerator {
+    
     static int[][][] generatePerlinVolume (int width, int height, int octaveCount, float persistence, int worldHeight, int minGroundHeight, int maxGroundHeight, int minDirtDepth, int maxDirtDepth, int waterDepth, int treeCount) {
         int range = maxGroundHeight - minGroundHeight;
         Random r = new Random();
@@ -36,8 +37,10 @@ public class NoiseGenerator {
                     } else if (dirtCount < dirtDepth) {
                         retVal[i][j][k] = Screen.dirt;
                         dirtCount ++;
-                    } else {
+                    } else if(k > 0) {
                         retVal[i][j][k] = Screen.stone;
+                    } else {
+                        retVal[i][j][k] = Screen.bedrock;
                     }
                 }
             }
@@ -59,7 +62,6 @@ public class NoiseGenerator {
     }
     
     static void addTrees(int[][][] mapdata, int treeVolume) {
-        final int searchCap = 50;
         final int minTreeHeight = 3;
         final int maxTreeHeight = 6;
         
@@ -74,7 +76,7 @@ public class NoiseGenerator {
             startY = 0;
             startZ = 0;
             
-            while (limiter < searchCap && notFound) {
+            while (limiter < treeVolume && notFound) {
                 // find a random X / Y coordinate away from the edge of the map (radius of tree leaves will currently cause index out of range)
                 startX = 3 + r.nextInt(mapdata.length - 6);
                 startY = 3 + r.nextInt(mapdata[0].length - 6);
@@ -85,7 +87,7 @@ public class NoiseGenerator {
                     int val = mapdata[startX][startY][h];
                     // if the current block, going from the top, is occupied
                     if (val != 0) {
-                        // Is this a dirt block?
+                        // Is this a grass block?
                         if (val == Screen.grass) {
                             startZ = h + 1;
                         }
