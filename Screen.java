@@ -67,10 +67,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    static final int size = 32;
+    static final int size = 128;
     static final int chunkSize = 8;
     static final int worldHeight = 32;
-    static final double renderDistance = 16;
+    static final double renderDistance = 24;
     static final double renderDistanceInChunks = renderDistance / chunkSize;
     
     /*
@@ -141,6 +141,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int x = 0; x < size / chunkSize; x ++) {
             for(int y = 0; y < size / chunkSize; y ++) {
                 Chunks[x + (y * size / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
+                System.out.println("Chunk " + (x + (y * size / chunkSize)) + " initialized");
             }
         }
         
