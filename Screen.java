@@ -65,7 +65,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    static final int worldSize = 64;
+    static final int worldSize = 32;
     static final int chunkSize = 8;
     static final int worldHeight = 32;
     static final double renderDistance = 16;
@@ -440,7 +440,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int i = 0; i < Chunks.length; i ++) {
             if(Chunks[i] != null) {
                 for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
-                    if(Chunks[i].getCubeArray().get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && Chunks[i].getCubeArray().get(j).isNormal()) {
+                    if(Chunks[i].getCubeArray().get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && !Chunks[i].getCubeArray().get(j).isWater()) {
                         double[] attrs = Chunks[i].getCubeArray().get(j).getAttributes();
                         double x = attrs[0] + (attrs[3] / 2);
                         double y = attrs[1] + (attrs[4] / 2);
@@ -491,7 +491,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         for(int i = NewOrder.length-1; i >= 0; i --) {
             if(DPolygons.get(NewOrder[i]).getDist() <= 6) {
                 if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && DPolygons.get(NewOrder[i]).isNormal())
+                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && !DPolygons.get(NewOrder[i]).isWater())
                 {
                     PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
                     selectedCube = DPolygons.get(NewOrder[i]).getID();
@@ -625,8 +625,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             if(selectedCube != -1) {
                 for(int i = 0; i < Chunks.length; i ++) {
                     for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
-                        if(Chunks[i].getCubeArray().get(j).getID() == selectedCube && Chunks[i].getCubeArray().get(j).isNormal() && !Chunks[i].getCubeArray().get(j).isBedrock()) {
+                        if(Chunks[i].getCubeArray().get(j).getID() == selectedCube && !Chunks[i].getCubeArray().get(j).isWater() && !Chunks[i].getCubeArray().get(j).isBedrock()) {
+                            double[][] adjacentCoords = new double[6][3];
+                            for(int f = 0; f < 6; f ++) {
+                                adjacentCoords[f] = Chunks[i].getCubeArray().get(j).getAdjacentCube(f);
+                            }
                             Chunks[i].getCubeArray().get(j).removeCube();
+                            Chunks[i].getCubeArray().get(0).hardAdjacencyCheck(adjacentCoords);
+                            System.out.println("checked");
                         }
                     }
                 }
@@ -637,7 +643,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             if(selectedCube != -1) {
                 for(int i = 0; i < Chunks.length; i ++) {
                     for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
-                        if(Chunks[i].getCubeArray().get(j).getID() == selectedCube && Chunks[i].getCubeArray().get(j).isNormal()) {
+                        if(Chunks[i].getCubeArray().get(j).getID() == selectedCube && !Chunks[i].getCubeArray().get(j).isWater()) {
                             double[] coords = Chunks[i].getCubeArray().get(j).getAdjacentCube(selectedFace);
                             int chunkIn = getChunkNumberIn((int)coords[0],(int)coords[1]);
                             if(!willCollide(new double[]{coords[0],coords[1],coords[2],1,1,1})) {
