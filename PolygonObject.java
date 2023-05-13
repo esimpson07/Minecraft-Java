@@ -8,7 +8,7 @@ public class PolygonObject {
     private boolean draw = true, visible = true, outlines = true, normal;
     private double lighting = 1;
     
-    public PolygonObject(double[] x, double[] y, Color c, int n, boolean normal)
+    public PolygonObject(double[] x, double[] y, Color c, int n)
     {
         poly = new Polygon();
         for(int i = 0; i<x.length; i++) {
@@ -41,7 +41,7 @@ public class PolygonObject {
                 g.drawPolygon(poly);
             }
 
-            if((Screen.PolygonOver == this) && normal) {
+            if((Screen.PolygonOver == this)) {
                 g.setColor(color);
                 g.fillPolygon(poly);
             }
