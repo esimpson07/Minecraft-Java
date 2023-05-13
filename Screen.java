@@ -312,9 +312,19 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         g.drawImage(hotbar,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2, (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight(), null);
         
-        //0 at coordinate 112,28 -> increments of 58 pixels
+        //0 at coordinate 121,28 -> increments of 92.2 pixels
         
         g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 121 + (int)(92.2 * (numberKey - 1)),(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
+        
+        for(int i = 0; i < 9; i ++) {
+            int xCoord = ((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 173 + (int)(92.2 * (numberKey - 1));
+            int yCoord = (int)DDDTutorial.ScreenSize.getHeight() - (hotbar.getHeight() / 2);
+            int xOffset = 25;
+            int yOffset = 25;
+            
+            g.setColor(Cube.getColor(numberKey - 1)[0]);
+            g.fillRect(xCoord - xOffset, yCoord - yOffset, xOffset * 2, yOffset * 2);
+        }
         
         SleepAndRefresh();
     }
@@ -439,42 +449,46 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         for(int i = 0; i < Chunks.length; i ++) {
             if(Chunks[i] != null) {
-                for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
-                    if(Chunks[i].getCubeArray().get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && !Chunks[i].getCubeArray().get(j).isWater()) {
-                        double[] attrs = Chunks[i].getCubeArray().get(j).getAttributes();
-                        double x = attrs[0] + (attrs[3] / 2);
-                        double y = attrs[1] + (attrs[4] / 2);
-                        double z = attrs[2] + (attrs[5] / 2);
-                        double px = ViewFrom[0];
-                        double py = ViewFrom[1];
-                        double pz = ViewFrom[2];
-                        double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
-                        double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
-                        double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
-                        double hzDiff = Math.abs(z + 0.5 - pz);
-                        if(zDiff <= heightTol + 0.5 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) {
-                            if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
-                                ViewFrom[1] = y + sideTol;
-                            } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
-                                ViewFrom[1] = y - sideTol;
-                            } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
-                                ViewFrom[0] = x + sideTol;
-                            } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
-                                ViewFrom[0] = x - sideTol;
-                            } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
-                                ViewFrom[2] = z + heightTol + 0.5;
-                                canJump = true;
-                                zVel = 0;
-                            } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
-                                ViewFrom[2] = z - heightTol + 0.5;
+                if(Chunks[i].getDistFromCenter(ViewFrom[0] / (double)chunkSize,ViewFrom[1] / (double)chunkSize) <= 1.41 * (double)chunkSize) {
+                    for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
+                        if(Chunks[i].getCubeArray().get(j).getDist(ViewFrom[0],ViewFrom[1],ViewFrom[2]) < 3 && !Chunks[i].getCubeArray().get(j).isWater()) {
+                            double[] attrs = Chunks[i].getCubeArray().get(j).getAttributes();
+                            double x = attrs[0] + (attrs[3] / 2);
+                            double y = attrs[1] + (attrs[4] / 2);
+                            double z = attrs[2] + (attrs[5] / 2);
+                            double px = ViewFrom[0];
+                            double py = ViewFrom[1];
+                            double pz = ViewFrom[2];
+                            double xDiff = Math.abs(x - px);//Calculator.roundTo(Math.abs(x - px),4);
+                            double yDiff = Math.abs(y - py);//Calculator.roundTo(Math.abs(y - py),4);
+                            double zDiff = Math.abs(z - pz);//Calculator.roundTo(Math.abs(z - pz),4);
+                            double hzDiff = Math.abs(z + 0.5 - pz);
+                            if(zDiff <= heightTol + 0.5 && xDiff <= sideTol - 0.005 && yDiff <= sideTol - 0.005) {
+                                if(hzDiff < 1 && yDiff > xDiff + 0.005 && py >= y + (sideTol - adjMovementFactor)) {
+                                    ViewFrom[1] = y + sideTol;
+                                } else if(hzDiff < 1 && yDiff > xDiff + 0.005 && py <= y - (sideTol - adjMovementFactor)) {
+                                    ViewFrom[1] = y - sideTol;
+                                } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px >= x + (sideTol - adjMovementFactor)) {
+                                    ViewFrom[0] = x + sideTol;
+                                } else if(hzDiff < 1 && xDiff > yDiff + 0.005 && px <= x - (sideTol - adjMovementFactor)) {
+                                    ViewFrom[0] = x - sideTol;
+                                } else if(zDiff < heightTol + 0.5 && pz >= z + (1.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
+                                    ViewFrom[2] = z + heightTol + 0.5;
+                                    canJump = true;
+                                    zVel = 0;
+                                } else if(zDiff < heightTol - 0.5 && pz <= z - (0.5 - adjMovementFactor) && xDiff < (sideTol - adjMovementFactor) - 0.005 && yDiff < (sideTol - adjMovementFactor) - 0.005) {
+                                    ViewFrom[2] = z - heightTol + 0.5;
+                                }
                             }
                         }
                     }
-                    updateView();
                 }
             }
         }
+        ViewFrom[0] = Calculator.clamp(ViewFrom[0],0,worldSize);
+        ViewFrom[1] = Calculator.clamp(ViewFrom[1],0,worldSize);
         
+        updateView();
     }
 
     void MoveTo(double x, double y, double z)
