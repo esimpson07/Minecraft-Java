@@ -11,7 +11,7 @@ public class DPolygon {
     
     private boolean draw = true, normal = true;
     
-    public DPolygon(double[] x, double[] y,  double[] z, Color c, boolean normal, int side, int id)
+    public DPolygon(double[] x, double[] y,  double[] z, Color c, int side, int id)
     {
         this.x = x;
         this.y = y;
@@ -25,7 +25,7 @@ public class DPolygon {
     
     void createPolygon()
     {
-        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size(), normal);
+        DrawablePolygon = new PolygonObject(new double[x.length], new double[x.length], c, Screen.DPolygons.size());
     }
     
     void updatePolygon()
@@ -94,8 +94,8 @@ public class DPolygon {
         return avgDist;
     }
     
-    boolean isNormal() {
-        return normal;
+    boolean isWater() {
+        return c.equals(Screen.waterBlue);
     }
     
     double[] getX() { return x; }
