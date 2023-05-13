@@ -65,7 +65,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    static final int size = 64;
+    static final int worldSize = 96;
     static final int chunkSize = 8;
     static final int worldHeight = 32;
     static final double renderDistance = 16;
@@ -124,30 +124,30 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         final int octaveCount = 4;
         final float persistence = 0.17f;
         final int minHeight = 6;
-        final int maxHeight = 20;
+        final int maxHeight = 17;
         final int minDirtDepth = 2;
         final int maxDirtDepth = 3;
-        final int waterDepth = 12;
+        final int waterDepth = 10;
         final int treeCount = 8;
         
-        Chunks = new Chunk[(size / chunkSize) * (size / chunkSize)];
+        Chunks = new Chunk[(worldSize / chunkSize) * (worldSize / chunkSize)];
         
         System.out.println("Starting map generation!");
         
-        int[][][] map = NoiseGenerator.generatePerlinVolume(size, size, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
-        for(int x = 0; x < size / chunkSize; x ++) {
-            for(int y = 0; y < size / chunkSize; y ++) {
-                Chunks[x + (y * size / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
-                System.out.println("Chunk " + (x + (y * size / chunkSize)) + " initialized");
+        int[][][] map = NoiseGenerator.generatePerlinVolume(worldSize, worldSize, octaveCount, persistence, worldHeight, minHeight, maxHeight, minDirtDepth, maxDirtDepth, waterDepth, treeCount);
+        for(int x = 0; x < worldSize / chunkSize; x ++) {
+            for(int y = 0; y < worldSize / chunkSize; y ++) {
+                Chunks[x + (y * worldSize / chunkSize)] = new Chunk(map,chunkSize,worldHeight,x,y);
+                System.out.println("Chunk " + (x + (y * worldSize / chunkSize)) + " initialized");
             }
         }
         
         System.out.println("Map generated.");
         
-        ViewFrom[0] = size / 2 + 0.5;
-        ViewFrom[1] = size / 2 + 0.5;
-        for(int i = 0; i < map[size / 2][size / 2].length; i ++) {
-            if(map[size / 2][size / 2][i] == -1) {
+        ViewFrom[0] = worldSize / 2 + 0.5;
+        ViewFrom[1] = worldSize / 2 + 0.5;
+        for(int i = 0; i < map[worldSize / 2][worldSize / 2].length; i ++) {
+            if(map[worldSize / 2][worldSize / 2][i] == -1) {
                 ViewFrom[2] = i + 1;
                 break;
             }
@@ -249,7 +249,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     }
     
     private boolean willCollide(double[] attrs) {
-        if(withinRange(attrs[0],0,size) && withinRange(attrs[1],0,size) && withinRange(attrs[2],0,worldHeight)) { //checking if the coordinate is within the world limits
+        if(withinRange(attrs[0],0,worldSize) && withinRange(attrs[1],0,worldSize) && withinRange(attrs[2],0,worldHeight)) { //checking if the coordinate is within the world limits
             double x = attrs[0] + (attrs[3] / 2);
             double y = attrs[1] + (attrs[4] / 2);
             double z = attrs[2] + (attrs[5] / 2);
@@ -308,7 +308,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         //FPS display
         g.drawString("FPS: " + (int)drawFPS, 40, 40);
         
-        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0],2) + " "  + Calculator.roundTo(ViewFrom[1],2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
+        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[1] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
         
         g.drawImage(hotbar,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2, (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight(), null);
         
