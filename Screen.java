@@ -67,7 +67,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     long repaintTime = 0;
     long time = 0;
     
-    static final int size = 128;
+    static final int size = 64;
     static final int chunkSize = 8;
     static final int worldHeight = 32;
     static final double renderDistance = 24;
