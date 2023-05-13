@@ -125,8 +125,10 @@ public class Cube {
             for(int f = 0; f < 6; f ++) {
                 if(adjacentChunks[i] != -1) {
                     for(int j = 0; j < Screen.Chunks[adjacentChunks[i]].getCubeArray().size(); j ++) {
-                        if(Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[1] == getAdjacentCube(f)[1]
-                            && Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && ((Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).isNormal() == normal) || !normal)){
+                        if(Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[adjacentChunks[i]].getCubeArray().
+                            get(j).getCoords()[1] == getAdjacentCube(f)[1] && Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
+                            ((Screen.Chunks[adjacentChunks[i]].getCubeArray().get(j).isWater() == isWater()) || isWater())){
+                            System.out.println("softchecked true");
                             polysToDraw[f] = false;
                             updatePoly();
                         }
@@ -142,7 +144,7 @@ public class Cube {
                 for(int f = 0; f < 6; f ++) {
                     if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
                         getAdjacentCube(f)[1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                        ((Screen.Chunks[i].getCubeArray().get(j).isNormal() == normal) || !normal)) {
+                        ((Screen.Chunks[i].getCubeArray().get(j).isWater() == isWater()) || isWater())) {
                         polysToDraw[f] = false;
                         updatePoly();
                     }
@@ -158,10 +160,44 @@ public class Cube {
                     for(int f = 0; f < 6; f ++) {
                         if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
                             getAdjacentCube(f)[1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && 
-                            ((Screen.Chunks[i].getCubeArray().get(j).isNormal() == normal) || !normal)) {
+                            ((Screen.Chunks[i].getCubeArray().get(j).isWater() == isWater()) || isWater()) && Screen.Chunks[i].getCubeArray().
+                            get(j).isGlass() == isGlass()) {
                             polysToDraw[f] = false;
                             updatePoly();
                             Screen.Chunks[i].getCubeArray().get(j).softAdjacencyCheck();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    void hardAdjacencyCheck(double[][] adjacentCubes) {
+        for(int i = 0; i < Screen.Chunks.length; i ++) {
+            if(Screen.Chunks[i] != null) {
+                for(int j = 0; j < Screen.Chunks[i].getCubeArray().size(); j ++) {
+                    for(int f = 0; f < 6; f ++) {
+                        if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == adjacentCubes[f][0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
+                            adjacentCubes[f][1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == adjacentCubes[f][2] && 
+                            ((Screen.Chunks[i].getCubeArray().get(j).isWater() == isWater()) || isWater())) {
+                            System.out.println("softchecked");
+                            Screen.Chunks[i].getCubeArray().get(j).softAdjacencyCheck();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    void changeAdjacentCubePoly(int face, boolean state) {
+        for(int i = 0; i < Screen.Chunks.length; i ++) {
+            if(Screen.Chunks[i] != null) {
+                for(int j = 0; j < Screen.Chunks[i].getCubeArray().size(); j ++) {
+                    for(int f = 0; f < 6; f ++) {
+                        if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
+                            getAdjacentCube(f)[1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && !Screen.Chunks[i].getCubeArray().get(j).isWater()) {
+                            Screen.Chunks[i].getCubeArray().get(j).changeAdjacentPoly(face,state);
+                            Screen.Chunks[i].getCubeArray().get(j).updatePoly();
                         }
                     }
                 }
@@ -248,7 +284,7 @@ public class Cube {
             Polys[0].setY(new double[]{y1, y2, y3, y4});;
             Polys[0].setZ(new double[]{z, z, z, z});
         } else  if(polysToDraw[0] == true && Polys[0] == null){
-            Polys[0] = new DPolygon(new double[]{x1, x2, x3, x4}, new double[]{y1, y2, y3, y4}, new double[]{z, z, z, z}, c[0], normal, 0, id);
+            Polys[0] = new DPolygon(new double[]{x1, x2, x3, x4}, new double[]{y1, y2, y3, y4}, new double[]{z, z, z, z}, c[0], 0, id);
         } else {
             Polys[0] = null;
         }
@@ -257,7 +293,7 @@ public class Cube {
             Polys[1].setY(new double[]{y4, y3, y2, y1});
             Polys[1].setZ(new double[]{z+height, z+height, z+height, z+height});
         } else if(polysToDraw[1] == true && Polys[1] == null){
-            Polys[1] = new DPolygon(new double[]{x4, x3, x2, x1}, new double[]{y4, y3, y2, y1}, new double[]{z+height, z+height, z+height, z+height}, c[1], normal, 1, id);
+            Polys[1] = new DPolygon(new double[]{x4, x3, x2, x1}, new double[]{y4, y3, y2, y1}, new double[]{z+height, z+height, z+height, z+height}, c[1], 1, id);
         } else {    
             Polys[1] = null;
         } 
@@ -266,7 +302,7 @@ public class Cube {
             Polys[2].setY(new double[]{y1, y1, y2, y2});
             Polys[2].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[2] == true && Polys[2] == null){
-            Polys[2] = new DPolygon(new double[]{x1, x1, x2, x2}, new double[]{y1, y1, y2, y2}, new double[]{z, z+height, z+height, z}, c[2], normal, 2, id);
+            Polys[2] = new DPolygon(new double[]{x1, x1, x2, x2}, new double[]{y1, y1, y2, y2}, new double[]{z, z+height, z+height, z}, c[2], 2, id);
         } else {
             Polys[2] = null;
         }
@@ -275,7 +311,7 @@ public class Cube {
             Polys[3].setY(new double[]{y2, y2, y3, y3});
             Polys[3].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[3] == true && Polys[3] == null){
-            Polys[3] = new DPolygon(new double[]{x2, x2, x3, x3}, new double[]{y2, y2, y3, y3},  new double[]{z, z+height, z+height, z}, c[3], normal, 3, id);
+            Polys[3] = new DPolygon(new double[]{x2, x2, x3, x3}, new double[]{y2, y2, y3, y3},  new double[]{z, z+height, z+height, z}, c[3], 3, id);
         } else {
             Polys[3] = null;
         }
@@ -284,7 +320,7 @@ public class Cube {
             Polys[4].setY(new double[]{y3, y3, y4, y4});
             Polys[4].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[4] == true && Polys[4] == null){
-            Polys[4] = new DPolygon(new double[]{x3, x3, x4, x4}, new double[]{y3, y3, y4, y4},  new double[]{z, z+height, z+height, z}, c[4], normal, 4, id);
+            Polys[4] = new DPolygon(new double[]{x3, x3, x4, x4}, new double[]{y3, y3, y4, y4},  new double[]{z, z+height, z+height, z}, c[4], 4, id);
         } else {
             Polys[4] = null;
         }
@@ -293,7 +329,7 @@ public class Cube {
             Polys[5].setY(new double[]{y4, y4, y1, y1});
             Polys[5].setZ(new double[]{z, z+height, z+height, z});
         } else if(polysToDraw[5] == true && Polys[5] == null){
-            Polys[5] = new DPolygon(new double[]{x4, x4, x1, x1}, new double[]{y4, y4, y1, y1},  new double[]{z, z+height, z+height, z}, c[5], normal, 5, id);
+            Polys[5] = new DPolygon(new double[]{x4, x4, x1, x1}, new double[]{y4, y4, y1, y1},  new double[]{z, z+height, z+height, z}, c[5], 5, id);
         } else {
             Polys[5] = null;
         }
@@ -352,28 +388,16 @@ public class Cube {
         return polysToDraw;
     }
     
-    boolean isNormal() {
-        return normal;
-    }
-    
     boolean isBedrock() {
         return type == Screen.bedrock;
     }
+        
+    boolean isWater() {
+        return type == Screen.water;
+    }
     
-    void changeAdjacentCubePoly(int face, boolean state) {
-        for(int i = 0; i < Screen.Chunks.length; i ++) {
-            if(Screen.Chunks[i] != null) {
-                for(int j = 0; j < Screen.Chunks[i].getCubeArray().size(); j ++) {
-                    for(int f = 0; f < 6; f ++) {
-                        if(Screen.Chunks[i].getCubeArray().get(j).getCoords()[0] == getAdjacentCube(f)[0] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[1] == 
-                            getAdjacentCube(f)[1] && Screen.Chunks[i].getCubeArray().get(j).getCoords()[2] == getAdjacentCube(f)[2] && Screen.Chunks[i].getCubeArray().get(j).isNormal()) {
-                            Screen.Chunks[i].getCubeArray().get(j).changeAdjacentPoly(face,state);
-                            Screen.Chunks[i].getCubeArray().get(j).updatePoly();
-                        }
-                    }
-                }
-            }
-        }
+    boolean isGlass() {
+        return type == Screen.glass;
     }
 
     void removeCubeInChunk()
