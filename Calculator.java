@@ -43,6 +43,10 @@ public class Calculator {
         }
     }
     
+    public static boolean withinRange(double val, double min, double max) {
+        return val >= min && val <= max;
+    }
+    
     public static double roundTo(double val, double places) {
         double scale = Math.pow(10,places);
         return Math.round(val * scale) / scale;
