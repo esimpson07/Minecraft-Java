@@ -17,6 +17,11 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.io.IOException;
 import java.io.File;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Rectangle;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -31,6 +36,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     //The polygon that the mouse is currently over
     static PolygonObject PolygonOver = null;
     
+    private Font minecraftFont;
     private BufferedImage hotbar;
     private BufferedImage selector;
     
@@ -48,25 +54,26 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     static double zoom = 1000, minZoom = 500, maxZoom = 2500, MouseX = 0, MouseY = 0, MovementSpeed = 0.5;
     
     //FPS is a bit primitive, you can set the MaxFPS as high as you want
-    double drawFPS = 0, maxFPS = 60, sleepTime = 1000.0/maxFPS, lastRefresh = 0, startTime = System.currentTimeMillis(), lastFPSCheck = 0, checks = 0;
+    private double drawFPS = 0, maxFPS = 60, sleepTime = 1000.0/maxFPS, lastRefresh = 0, startTime = System.currentTimeMillis(), lastFPSCheck = 0, checks = 0;
     //VertLook goes from 0.999 to -0.999, minus being looking down and + looking up, HorLook takes any number and goes round in radians
     //aimSight changes the size of the center-cross. The lower HorRotSpeed or VertRotSpeed, the faster the camera will rotate in those directions
-    double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
+    private double VertLook = -0.9, HorLook = 0, aimSight = 4, HorRotSpeed = 900, VertRotSpeed = 2200, SunPos = Math.PI / 4, zVel = 0;
 
-    double movementFactor = 0.1, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1, scroll = 0;
-    //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(NewOrder[0]) gets drawn first
-    static int[] NewOrder;
-
-    static boolean OutLines = true;
-    private boolean canJump = true;
+    private double movementFactor = 0.085, heightTol = 1.4, sideTol = 0.8, gravity = 0.007, jumpVel = 0.13, reachDist = 12, daylightCycle = 1, scroll = 0;
+    //will hold the order that the polygons in the ArrayList DPolygon should be drawn meaning DPolygon.get(newPolygonOrder[0]) gets drawn first
+    private int[] newPolygonOrder;
+    
+    private boolean canJump = false;
+    
     boolean[] Keys = new boolean[8];
+    
     int numberKey = 1;
     
-    long repaintTime = 0;
     long time = 0;
+    long pastTime = 0;
     
     static final int worldSize = 32;
-    static final int chunkSize = 8;
+    static final int chunkSize = 1;
     static final int worldHeight = 32;
     static final double renderDistance = 16;
     static final double renderDistanceInChunks = renderDistance / chunkSize;
@@ -113,22 +120,34 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     static Color bgColor = new Color(50,150,255);
     
-    private void cubeLoader() {
+    private void resourceLoader() {
+        try {
+            minecraftFont = Font.createFont(Font.TRUETYPE_FONT, new File("Resources/Fonts/font.ttf")).deriveFont(32f);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(minecraftFont);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch(FontFormatException e) {
+            e.printStackTrace();
+        }
+        
         try {
             hotbar = ImageIO.read(new File("Resources/Images/hotbar.png"));
             selector = ImageIO.read(new File("Resources/Images/selector.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
-        final int octaveCount = 4;
-        final float persistence = 0.17f;
-        final float treeDensity = 0.03f;
-        final int minHeight = 6;
-        final int maxHeight = 17;
-        final int minDirtDepth = 2;
-        final int maxDirtDepth = 3;
-        final int waterDepth = 9;
+    }
+    
+    private void cubeLoader() {
+        final float persistence = 0.17f; //The persistence (connection in the concavity of the ground) in %
+        final float treeDensity = 0.03f; //3% of blocks will have trees -> statistically speaking only
+        final int octaveCount = 4; // amounts of passes the generator does on the ground for smoothing
+        final int minHeight = 14; //minimum height for ground
+        final int maxHeight = 25; //highest peak for ground
+        final int minDirtDepth = 2; //at minimum there will be 1 grass and 1 dirt block on the surface
+        final int maxDirtDepth = 3; //at maximum there will be 1 grass and 2 dirt blocks on the surface
+        final int waterDepth = 9; //the z height the water generates at
         final int treeCount = (int)(treeDensity * Math.pow(worldSize, 2));
         
         Chunks = new Chunk[(worldSize / chunkSize) * (worldSize / chunkSize)];
@@ -174,6 +193,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         
         invisibleMouse();
         
+        resourceLoader();
+        
         cubeLoader();
         
         refreshCubes();
@@ -204,7 +225,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     
     public void drawChunk(int i) {
         if(!Chunks[i].isAlreadyInMap()) {
-            Chunks[i].getCubeArray().get(0).chunkOnlyAdjacencyCheck(i);
             for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
                 Chunks[i].getCubeArray().get(j).updatePoly();
             }
@@ -299,16 +319,18 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             
         //draw polygons in the Order that is set by the 'setOrder' function
         
-        for(int i = 0; i < NewOrder.length; i++) {
-            DPolygons.get(NewOrder[i]).getDrawablePolygon().drawPolygon(g);
+        for(int i = 0; i < newPolygonOrder.length; i++) {
+            DPolygons.get(newPolygonOrder[i]).getDrawablePolygon().drawPolygon(g);
         }
         //draw the cross in the center of the screen
         drawMouseAim(g);            
         
         //FPS display
+        g.setFont(minecraftFont);
+        
         g.drawString("FPS: " + (int)drawFPS, 40, 40);
         
-        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[1] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[2],2), 160, 40);
+        g.drawString("X Y Z: " + Calculator.roundTo(ViewFrom[0] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[1] - worldSize / 2,2) + " "  + Calculator.roundTo(ViewFrom[2],2), 40, 80);
         
         g.drawImage(hotbar,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2, (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight(), null);
         
@@ -317,27 +339,46 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         g.drawImage(selector,((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 121 + (int)(92.2 * (numberKey - 1)),(int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - 5, null);
         
         for(int i = 0; i < 9; i ++) {
-            int xCoord = ((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 173 + (int)(92.2 * (numberKey - 1));
+            int xCoord = ((int)DDDTutorial.ScreenSize.getWidth() - hotbar.getWidth()) / 2 + 175 + (int)(92.2 * i);
             int yCoord = (int)DDDTutorial.ScreenSize.getHeight() - (hotbar.getHeight() / 2);
             int xOffset = 25;
             int yOffset = 25;
             
-            g.setColor(Cube.getColor(numberKey - 1)[0]);
+            g.setColor(Cube.getColor(i)[2]);
             g.fillRect(xCoord - xOffset, yCoord - yOffset, xOffset * 2, yOffset * 2);
+            if(i == 3) {
+                g.setColor(Cube.getColor(i)[1]);
+                g.fillRect(xCoord - xOffset, yCoord - yOffset, xOffset * 2, (int)(yOffset * 0.25));
+            } else if(i == 5) {
+                g.setColor(Cube.getColor(i)[1]);
+                g.fillRect(xCoord - xOffset, yCoord - yOffset, xOffset * 2, (int)(yOffset * 0.25));
+            }
         }
         
+        drawSelectedItemText(g, colorNames[numberKey - 1], minecraftFont);
+        
         SleepAndRefresh();
+    }
+    
+    private void drawSelectedItemText(Graphics g, String text, Font font) {
+        FontMetrics metrics = g.getFontMetrics(font);
+        int x = ((int)DDDTutorial.ScreenSize.getWidth() - metrics.stringWidth(text)) / 2;
+        int pxDist = 10;
+        int y = (int)DDDTutorial.ScreenSize.getHeight() - hotbar.getHeight() - metrics.getHeight() - pxDist;
+        g.setColor(Color.BLACK);
+        g.setFont(font);
+        g.drawString(text, x, y);
     }
     
     void setOrder()
     {
         double[] k = new double[DPolygons.size()];
-        NewOrder = new int[DPolygons.size()];
+        newPolygonOrder = new int[DPolygons.size()];
         
         for(int i=0; i<DPolygons.size(); i++)
         {
             k[i] = DPolygons.get(i).getAvgDist();
-            NewOrder[i] = i;
+            newPolygonOrder[i] = i;
         }
         
         double temp;
@@ -347,11 +388,11 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 if(k[b] < k[b + 1])
                 {
                     temp = k[b];
-                    tempr = NewOrder[b];
-                    NewOrder[b] = NewOrder[b + 1];
+                    tempr = newPolygonOrder[b];
+                    newPolygonOrder[b] = newPolygonOrder[b + 1];
                     k[b] = k[b + 1];
                        
-                    NewOrder[b + 1] = tempr;
+                    newPolygonOrder[b + 1] = tempr;
                     k[b + 1] = temp;
                 }
             }
@@ -412,6 +453,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         Vector ViewVector = new Vector(ViewTo[0] - ViewFrom[0], ViewTo[1] - ViewFrom[1], ViewTo[2] - ViewFrom[2]);
         double xMove = 0, yMove = 0, zMove = 0;
         double adjMovementFactor = (60.0 * movementFactor) / Calculator.clamp(drawFPS,15,maxFPS);
+        
+        if(Keys[6]) {
+            adjMovementFactor *= 1.4;
+        }
         
         Vector VerticalVector = new Vector (0, 0, 1);
         Vector SideViewVector = ViewVector.CrossProduct(VerticalVector);
@@ -502,14 +547,14 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     {
         PolygonOver = null;
         selectedCube = -1;
-        for(int i = NewOrder.length-1; i >= 0; i --) {
-            if(DPolygons.get(NewOrder[i]).getDist() <= 6) {
-                if(DPolygons.get(NewOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(NewOrder[i]).getDraw() 
-                        && DPolygons.get(NewOrder[i]).getDrawablePolygon().isVisible() && !DPolygons.get(NewOrder[i]).isWater())
+        for(int i = newPolygonOrder.length-1; i >= 0; i --) {
+            if(DPolygons.get(newPolygonOrder[i]).getDist() <= 6) {
+                if(DPolygons.get(newPolygonOrder[i]).getDrawablePolygon().MouseOver() && DPolygons.get(newPolygonOrder[i]).getDraw() 
+                        && DPolygons.get(newPolygonOrder[i]).getDrawablePolygon().isVisible() && !DPolygons.get(newPolygonOrder[i]).isWater())
                 {
-                    PolygonOver = DPolygons.get(NewOrder[i]).getDrawablePolygon();
-                    selectedCube = DPolygons.get(NewOrder[i]).getID();
-                    selectedFace = DPolygons.get(NewOrder[i]).getSide();
+                    PolygonOver = DPolygons.get(newPolygonOrder[i]).getDrawablePolygon();
+                    selectedCube = DPolygons.get(newPolygonOrder[i]).getID();
+                    selectedFace = DPolygons.get(newPolygonOrder[i]).getSide();
                     break;
                 }
             }
@@ -567,7 +612,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_SHIFT) {
             Keys[5] = true;
         }
-        if(e.getKeyCode() == KeyEvent.VK_E) {
+        if(e.getKeyCode() == KeyEvent.VK_CONTROL) {
             Keys[6] = true;
         }
         if(e.getKeyCode() == KeyEvent.VK_F) {
@@ -582,8 +627,6 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if(e.getKeyCode() == KeyEvent.VK_7) { numberKey = 7; }
         if(e.getKeyCode() == KeyEvent.VK_8) { numberKey = 8; }
         if(e.getKeyCode() == KeyEvent.VK_9) { numberKey = 9; }
-        if(e.getKeyCode() == KeyEvent.VK_O)
-            OutLines = !OutLines;
         if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
             System.exit(0);
     }
@@ -601,7 +644,7 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             Keys[4] = false;
         if(e.getKeyCode() == KeyEvent.VK_SHIFT)
             Keys[5] = false;
-        if(e.getKeyCode() == KeyEvent.VK_E) 
+        if(e.getKeyCode() == KeyEvent.VK_CONTROL) 
             Keys[6] = false;
         if(e.getKeyCode() == KeyEvent.VK_F) 
             Keys[7] = false;
@@ -640,10 +683,12 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 for(int i = 0; i < Chunks.length; i ++) {
                     for(int j = 0; j < Chunks[i].getCubeArray().size(); j ++) {
                         if(Chunks[i].getCubeArray().get(j).getID() == selectedCube && !Chunks[i].getCubeArray().get(j).isWater() && !Chunks[i].getCubeArray().get(j).isBedrock()) {
-                            double[][] adjacentCoords = new double[6][3];
+                            double[][] adjacentCoords = new double[7][3];
                             for(int f = 0; f < 6; f ++) {
                                 adjacentCoords[f] = Chunks[i].getCubeArray().get(j).getAdjacentCube(f);
                             }
+                            adjacentCoords[6] = new double[]{Chunks[i].getCubeArray().get(j).getCoords()[0],
+                                Chunks[i].getCubeArray().get(j).getCoords()[1], Chunks[i].getCubeArray().get(j).getCoords()[2]};
                             Chunks[i].getCubeArray().get(j).removeCube();
                             Chunks[i].getCubeArray().get(0).hardAdjacencyCheck(adjacentCoords);
                         }
